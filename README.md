@@ -526,6 +526,18 @@ Please avoid posting private account information, authentication credentials, co
 
 ---
 
+# 🔐 External Signing / Dependencies
+
+[Exact explanation of whether signing is handled locally or by an external service.]
+
+TikTok LIVE Dock uses `tiktok-live-connector` for the LIVE connection. 
+It does not use TikTok's official API for LIVE webcast data.
+
+Because TikTok's LIVE webcast protocol is unofficial, changes made by TikTok
+may break functionality without notice.
+
+---
+
 # ⚠️ Disclaimer
 
 **TikTok LIVE Dock is an unofficial community project.**

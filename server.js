@@ -5,344 +5,870 @@ import {
     TikTokLiveConnection
 } from "tiktok-live-connector";
 import { WebSocketServer } from "ws";
+import fs from "fs";
+import path from "path";
+
+
+/* ============================================================
+   CONFIG
+   ============================================================ */
 
 const PORT = 3000;
 const WS_PORT = 3001;
-const USERNAME = "username_here";
 
-// Estimated creator value per diamond.
-// This is an estimate, not a guaranteed TikTok payout rate.
-const USD_PER_DIAMOND = 0.005;
+const CONFIG_FILE =
+    path.join(process.cwd(), "dock-config.json");
 
-const app = express();
-app.use(express.static("public"));
+/*
+ * Approximate creator payout value per diamond.
+ *
+ * This is an estimate, not an official fixed TikTok exchange rate.
+ */
+const DIAMOND_USD_VALUE = 0.005;
 
-app.listen(PORT, () => {
-    console.log(`[DOCK] http://localhost:${PORT}`);
-});
 
-const wss = new WebSocketServer({
-    port: WS_PORT
-});
+/* ============================================================
+   CONFIG STORAGE
+   ============================================================ */
 
-const clients = new Set();
+function loadConfig() {
 
-let currentMode = "test";
+    try {
+
+        if (
+            fs.existsSync(CONFIG_FILE)
+        ) {
+
+            const raw =
+                fs.readFileSync(
+                    CONFIG_FILE,
+                    "utf8"
+                );
+
+            const config =
+                JSON.parse(raw);
+
+            if (
+                typeof config.username === "string" &&
+                config.username.trim()
+            ) {
+
+                return {
+                    username:
+                        config.username.trim()
+                };
+
+            }
+
+        }
+
+    } catch (error) {
+
+        console.error(
+            "[CONFIG] Could not load config:",
+            error
+        );
+
+    }
+
+
+    return {
+        username: "kickrzzz"
+    };
+
+}
+
+
+function saveConfig() {
+
+    try {
+
+        fs.writeFileSync(
+            CONFIG_FILE,
+            JSON.stringify(
+                {
+                    username: USERNAME
+                },
+                null,
+                4
+            ),
+            "utf8"
+        );
+
+    } catch (error) {
+
+        console.error(
+            "[CONFIG] Could not save config:",
+            error
+        );
+
+    }
+
+}
+
+
+let USERNAME =
+    loadConfig().username;
+
+
+/* ============================================================
+   EXPRESS
+   ============================================================ */
+
+const app =
+    express();
+
+
+app.use(
+    express.static("public")
+);
+
+
+app.listen(
+    PORT,
+    () => {
+
+        console.log(
+            `[DOCK] http://localhost:${PORT}`
+        );
+
+        console.log(
+            `[DOCK] Alerts: http://localhost:${PORT}/alerts.html`
+        );
+
+    }
+);
+
+
+/* ============================================================
+   WEBSOCKET SERVER
+   ============================================================ */
+
+const wss =
+    new WebSocketServer({
+        port: WS_PORT
+    });
+
+
+const clients =
+    new Set();
+
+
+/* ============================================================
+   CONNECTION STATE
+   ============================================================ */
+
 let connection = null;
+
 let reconnectTimer = null;
+
+let followerRefreshTimer = null;
+
 let manualDisconnect = false;
 
+let connecting = false;
+
+
+/* ============================================================
+   LIVE STATE
+   ============================================================ */
+
 const liveState = {
+
     viewers: 0,
+
     likes: 0,
+
     totalFollowers: null,
+
     newFollowers: 0,
 
-    // Total gift items received.
     gifts: 0,
 
-    // Total diamonds received.
     diamonds: 0,
 
-    // Estimated creator value in USD.
     estimatedUsd: 0,
 
     hasAuthoritativeViewerCount: false
+
 };
 
-function broadcast(data) {
-    const message = JSON.stringify(data);
-
-    for (const client of clients) {
-        if (client.readyState === 1) {
-            client.send(message);
-        }
-    }
-}
-
-function broadcastStats() {
-    broadcast({
-        type: "stats",
-        ...liveState
-    });
-}
-
-wss.on("connection", ws => {
-    clients.add(ws);
-
-    ws.send(JSON.stringify({
-        type: "status",
-        mode: currentMode,
-        connected:
-            currentMode === "stream" &&
-            connection?.isConnected === true
-    }));
-
-    ws.send(JSON.stringify({
-        type: "stats",
-        ...liveState
-    }));
-
-    ws.on("message", async raw => {
-        try {
-            const data = JSON.parse(raw.toString());
-
-            if (data.type === "setMode") {
-                if (data.mode === "test") {
-                    await enterTestMode();
-                }
-
-                if (data.mode === "stream") {
-                    await enterStreamMode();
-                }
-            }
-
-            if (
-                data.type === "testEvent" &&
-                currentMode === "test"
-            ) {
-                sendTestEvent();
-            }
-        } catch (error) {
-            console.error("[WS] Message error:", error);
-        }
-    });
-
-    ws.on("close", () => {
-        clients.delete(ws);
-    });
-});
 
 /* ============================================================
-   TEST MODE
+   BROADCAST
    ============================================================ */
 
-const testState = {
-    viewers: 127,
-    likes: 4821,
-    totalFollowers: 1247,
-    newFollowers: 32,
-    gifts: 0,
-    diamonds: 0,
-    estimatedUsd: 0
-};
+function broadcast(data) {
 
-const fakeEvents = [
-    {
-        type: "chat",
-        user: "viewer123",
-        text: "hello bro"
-    },
-    {
-        type: "chat",
-        user: "pikachu_fan",
-        text: "W stream 🔥"
-    },
-    {
-        type: "gift",
-        user: "gift_master",
-        giftName: "Rose",
-        repeatCount: 3,
-        diamondCount: 1
-    },
-    {
-        type: "gift",
-        user: "legendary_viewer",
-        giftName: "Galaxy",
-        repeatCount: 1,
-        diamondCount: 1000
-    },
-    {
-        type: "follow",
-        user: "newviewer"
-    },
-    {
-        type: "join",
-        user: "randomviewer"
-    },
-    {
-        type: "fanclub",
-        user: "pikachu_fan"
+    const message =
+        JSON.stringify(data);
+
+
+    for (
+        const client of clients
+    ) {
+
+        if (
+            client.readyState === 1
+        ) {
+
+            try {
+
+                client.send(message);
+
+            } catch {}
+
+        }
+
     }
-];
 
-function sendTestStats() {
+}
+
+
+function broadcastStats() {
+
     broadcast({
+
         type: "stats",
-        viewers: testState.viewers,
-        likes: testState.likes,
-        totalFollowers: testState.totalFollowers,
-        newFollowers: testState.newFollowers,
-        gifts: testState.gifts,
-        diamonds: testState.diamonds,
-        estimatedUsd: testState.estimatedUsd
+
+        ...liveState
+
     });
+
 }
 
-function sendTestEvent() {
-    const event =
-        fakeEvents[
-            Math.floor(
-                Math.random() * fakeEvents.length
-            )
-        ];
 
-    if (event.type === "gift") {
+function broadcastStatus(
+    overrides = {}
+) {
 
-        const quantity =
-            Number(event.repeatCount ?? 1);
+    broadcast({
 
-        const diamonds =
-            Number(event.diamondCount ?? 0) *
-            quantity;
+        type: "status",
 
-        testState.gifts += quantity;
-        testState.diamonds += diamonds;
-        testState.estimatedUsd +=
-            diamonds * USD_PER_DIAMOND;
+        username: USERNAME,
 
-        broadcast({
-            ...event,
-            diamonds,
-            estimatedUsd:
-                diamonds * USD_PER_DIAMOND,
-            countedAmount: quantity
-        });
-    }
+        connected:
+            connection?.isConnected === true,
 
-    if (event.type === "chat") {
-        broadcast(event);
-    }
+        connecting,
 
-    if (event.type === "follow") {
-        testState.newFollowers++;
+        ...overrides
 
-        broadcast(event);
-    }
+    });
 
-    if (event.type === "join") {
-        broadcast(event);
-    }
-
-    if (event.type === "fanclub") {
-        broadcast(event);
-    }
-
-    sendTestStats();
 }
 
-setInterval(() => {
-    if (currentMode !== "test") {
-        return;
-    }
-
-    testState.viewers = Math.max(
-        0,
-        testState.viewers +
-        (Math.random() > 0.5 ? 1 : -1)
-    );
-
-    testState.likes +=
-        Math.floor(Math.random() * 8);
-
-    sendTestStats();
-    sendTestEvent();
-
-}, 5000);
 
 /* ============================================================
-   TIKTOK CONNECTION
+   RESET LIVE STATE
+   ============================================================ */
+
+function resetLiveState() {
+
+    liveState.viewers = 0;
+
+    liveState.likes = 0;
+
+    liveState.totalFollowers = null;
+
+    liveState.newFollowers = 0;
+
+    liveState.gifts = 0;
+
+    liveState.diamonds = 0;
+
+    liveState.estimatedUsd = 0;
+
+    liveState.hasAuthoritativeViewerCount = false;
+
+}
+
+
+/* ============================================================
+   WEBSOCKET
+   ============================================================ */
+
+wss.on(
+    "connection",
+    ws => {
+
+        clients.add(ws);
+
+
+        ws.send(
+            JSON.stringify({
+
+                type: "status",
+
+                username: USERNAME,
+
+                connected:
+                    connection?.isConnected === true,
+
+                connecting
+
+            })
+        );
+
+
+        ws.send(
+            JSON.stringify({
+
+                type: "stats",
+
+                ...liveState
+
+            })
+        );
+
+
+        ws.on(
+            "message",
+            async raw => {
+
+                try {
+
+                    const data =
+                        JSON.parse(
+                            raw.toString()
+                        );
+
+
+                    /* ----------------------------------------
+                       CHANGE USERNAME
+                       ---------------------------------------- */
+
+                    if (
+                        data.type === "setUsername"
+                    ) {
+
+                        const requestedUsername =
+                            String(
+                                data.username ?? ""
+                            )
+                            .trim()
+                            .replace(/^@/, "");
+
+
+                        if (
+                            !requestedUsername
+                        ) {
+
+                            ws.send(
+                                JSON.stringify({
+
+                                    type: "error",
+
+                                    message:
+                                        "Please enter a TikTok username."
+
+                                })
+                            );
+
+                            return;
+
+                        }
+
+
+                        if (
+                            requestedUsername === USERNAME &&
+                            connection?.isConnected
+                        ) {
+
+                            ws.send(
+                                JSON.stringify({
+
+                                    type: "usernameSaved",
+
+                                    username:
+                                        USERNAME
+
+                                })
+                            );
+
+                            return;
+
+                        }
+
+
+                        console.log(
+                            `[DOCK] Changing monitored username: @${USERNAME} -> @${requestedUsername}`
+                        );
+
+
+                        USERNAME =
+                            requestedUsername;
+
+
+                        saveConfig();
+
+
+                        await reconnectWithNewUsername();
+
+
+                        return;
+
+                    }
+
+
+                    /* ----------------------------------------
+                       MANUAL RECONNECT
+                       ---------------------------------------- */
+
+                    if (
+                        data.type === "reconnect"
+                    ) {
+
+                        await reconnectWithNewUsername();
+
+                        return;
+
+                    }
+
+                } catch (error) {
+
+                    console.error(
+                        "[WS] Message error:",
+                        error
+                    );
+
+                }
+
+            }
+        );
+
+
+        ws.on(
+            "close",
+            () => {
+
+                clients.delete(ws);
+
+            }
+        );
+
+    }
+);
+
+
+/* ============================================================
+   GENERIC RECURSIVE VALUE FINDER
+   ============================================================ */
+
+function findNumericValue(
+    object,
+    keys
+) {
+
+    if (
+        object === null ||
+        object === undefined ||
+        typeof object !== "object"
+    ) {
+
+        return null;
+
+    }
+
+
+    for (
+        const key of keys
+    ) {
+
+        const value =
+            object[key];
+
+
+        if (
+            value !== undefined &&
+            value !== null &&
+            value !== ""
+        ) {
+
+            const number =
+                Number(value);
+
+
+            if (
+                Number.isFinite(number) &&
+                number >= 0
+            ) {
+
+                return number;
+
+            }
+
+        }
+
+    }
+
+
+    for (
+        const value of Object.values(object)
+    ) {
+
+        if (
+            value &&
+            typeof value === "object"
+        ) {
+
+            const result =
+                findNumericValue(
+                    value,
+                    keys
+                );
+
+
+            if (
+                result !== null
+            ) {
+
+                return result;
+
+            }
+
+        }
+
+    }
+
+
+    return null;
+
+}
+
+
+/* ============================================================
+   FOLLOWER COUNT
+   ============================================================ */
+
+function findFollowerCount(
+    object
+) {
+
+    return findNumericValue(
+        object,
+        [
+            "followerCount",
+            "followerCountStr",
+            "follower_count",
+            "follower_count_str"
+        ]
+    );
+
+}
+
+
+function updateFollowerCount(
+    roomInfo
+) {
+
+    const count =
+        findFollowerCount(
+            roomInfo
+        );
+
+
+    if (
+        count === null
+    ) {
+
+        return;
+
+    }
+
+
+    liveState.totalFollowers =
+        count;
+
+
+    broadcastStats();
+
+}
+
+
+/* ============================================================
+   LIKE COUNT
+   ============================================================ */
+
+function findLikeCount(
+    object
+) {
+
+    return findNumericValue(
+        object,
+        [
+            "totalLikeCount",
+            "totalLikeCountStr",
+            "totalLikes",
+            "totalLikesCount",
+            "total_like_count"
+        ]
+    );
+
+}
+
+
+function updateLikeCount(
+    object
+) {
+
+    const count =
+        findLikeCount(
+            object
+        );
+
+
+    if (
+        count === null
+    ) {
+
+        return false;
+
+    }
+
+
+    if (
+        count >= liveState.likes
+    ) {
+
+        liveState.likes =
+            count;
+
+
+        broadcast({
+
+            type: "likes",
+
+            total:
+                liveState.likes
+
+        });
+
+
+        broadcastStats();
+
+
+        return true;
+
+    }
+
+
+    return false;
+
+}
+
+
+/* ============================================================
+   ROOM INFO REFRESH
+   ============================================================ */
+
+async function refreshRoomStats() {
+
+    if (
+        !connection ||
+        !connection.isConnected
+    ) {
+
+        return;
+
+    }
+
+
+    try {
+
+        const roomInfo =
+            await connection.getRoomInfo();
+
+
+        updateFollowerCount(
+            roomInfo
+        );
+
+
+        updateLikeCount(
+            roomInfo
+        );
+
+    } catch {
+        /*
+         * The next refresh will retry.
+         */
+    }
+
+}
+
+
+function startRoomStatsRefresh() {
+
+    stopRoomStatsRefresh();
+
+
+    followerRefreshTimer =
+        setInterval(
+            refreshRoomStats,
+            3000
+        );
+
+}
+
+
+function stopRoomStatsRefresh() {
+
+    if (
+        followerRefreshTimer
+    ) {
+
+        clearInterval(
+            followerRefreshTimer
+        );
+
+        followerRefreshTimer = null;
+
+    }
+
+}
+
+
+/* ============================================================
+   CREATE TIKTOK CONNECTION
    ============================================================ */
 
 function createConnection() {
 
-    connection = new TikTokLiveConnection(
-        USERNAME,
-        {
-            // IMPORTANT:
-            // Extended gift info remains disabled.
-            enableExtendedGiftInfo: false,
+    connection =
+        new TikTokLiveConnection(
+            USERNAME,
+            {
 
-            fetchRoomInfoOnConnect: true,
+                enableExtendedGiftInfo: false,
 
-            processInitialData: true
-        }
-    );
+                fetchRoomInfoOnConnect: true,
 
-    /* --------------------------------------------------------
+                processInitialData: true
+
+            }
+        );
+
+
+    /* ========================================================
        CONNECTED
-       -------------------------------------------------------- */
+       ======================================================== */
 
     connection.on(
         ControlEvent.CONNECTED,
         state => {
 
+            connecting = false;
+
+
             console.log("");
-            console.log("=================================");
+
+            console.log(
+                "================================="
+            );
+
             console.log(
                 `[TIKTOK] Connected to @${USERNAME}`
             );
+
             console.log(
                 `[TIKTOK] Room ID: ${state.roomId}`
             );
-            console.log("=================================");
+
+            console.log(
+                "================================="
+            );
+
             console.log("");
 
-            broadcast({
-                type: "status",
-                mode: "stream",
+
+            broadcastStatus({
                 connected: true,
                 connecting: false,
                 roomId: state.roomId
             });
 
-            if (state.roomInfo) {
+
+            if (
+                state.roomInfo
+            ) {
+
                 updateFollowerCount(
                     state.roomInfo
                 );
+
+                updateLikeCount(
+                    state.roomInfo
+                );
+
             }
+
+
+            startRoomStatsRefresh();
+
         }
     );
 
-    /* --------------------------------------------------------
+
+    /* ========================================================
        DISCONNECTED
-       -------------------------------------------------------- */
+       ======================================================== */
 
     connection.on(
         ControlEvent.DISCONNECTED,
         ({ code, reason }) => {
 
+            stopRoomStatsRefresh();
+
+
+            connecting = false;
+
+
             console.log(
                 `[TIKTOK] Disconnected (${code})`
             );
 
-            if (reason) {
+
+            if (
+                reason
+            ) {
+
                 console.log(
                     `[TIKTOK] Reason: ${reason}`
                 );
+
             }
 
-            broadcast({
-                type: "status",
-                mode: "stream",
+
+            broadcastStatus({
+
                 connected: false,
+
                 connecting: false,
+
                 reason:
-                    reason ?? "Connection lost"
+                    reason ??
+                    "Connection lost"
+
             });
 
+
             if (
-                !manualDisconnect &&
-                currentMode === "stream"
+                !manualDisconnect
             ) {
+
                 scheduleReconnect();
+
             }
+
         }
     );
 
-    /* --------------------------------------------------------
+
+    /* ========================================================
        ERRORS
-       -------------------------------------------------------- */
+       ======================================================== */
 
     connection.on(
         ControlEvent.ERROR,
@@ -353,19 +879,26 @@ function createConnection() {
                 error
             );
 
+
             broadcast({
+
                 type: "debug",
+
                 level: "error",
+
                 message:
                     error?.message ??
                     String(error)
+
             });
+
         }
     );
 
-    /* --------------------------------------------------------
+
+    /* ========================================================
        CHAT
-       -------------------------------------------------------- */
+       ======================================================== */
 
     connection.on(
         WebcastEvent.CHAT,
@@ -377,29 +910,40 @@ function createConnection() {
                 data.uniqueId ??
                 "unknown";
 
+
             const nickname =
                 data.user?.nickname ??
                 user;
 
-            const text =
-                data.comment ?? "";
 
-            console.log(
-                `[CHAT] ${user}: ${text}`
-            );
+            const text =
+                data.comment ??
+                data.message ??
+                data.text ??
+                data.content ??
+                data.msg ??
+                "";
+
 
             broadcast({
+
                 type: "chat",
+
                 user,
+
                 nickname,
+
                 text
+
             });
+
         }
     );
 
-    /* --------------------------------------------------------
+
+    /* ========================================================
        GIFTS
-       -------------------------------------------------------- */
+       ======================================================== */
 
     connection.on(
         WebcastEvent.GIFT,
@@ -411,63 +955,59 @@ function createConnection() {
                 data.uniqueId ??
                 "unknown";
 
+
             const nickname =
                 data.user?.nickname ??
                 user;
 
-            /*
-             * Gift name can be available directly
-             * without extended gift information.
-             */
+
             const giftName =
                 data.giftName ??
-                data.giftDetails?.giftName ??
+                data.gift?.name ??
                 `Gift #${data.giftId ?? "unknown"}`;
+
 
             const giftId =
                 data.giftId ??
-                data.giftDetails?.giftId ??
+                data.gift?.id ??
                 null;
 
-            /*
-             * IMPORTANT:
-             *
-             * diamondCount is part of the gift message.
-             *
-             * Try both locations because connector/protocol
-             * versions can expose the field differently.
-             */
-            const diamondCount =
-                Number(
-                    data.diamondCount ??
-                    data.giftDetails?.diamondCount ??
-                    0
-                );
 
             const repeatCount =
-                Number(
-                    data.repeatCount ?? 1
+                Math.max(
+                    1,
+                    Number(
+                        data.repeatCount ?? 1
+                    )
                 );
+
+
+            const diamondCount =
+                Math.max(
+                    0,
+                    Number(
+                        data.diamondCount ??
+                        data.gift?.diamondCount ??
+                        0
+                    )
+                );
+
 
             const giftType =
                 data.giftType ??
-                data.giftDetails?.giftType ??
                 data.gift?.giftType ??
                 null;
+
 
             const repeatEnd =
                 data.repeatEnd === true ||
                 data.repeatEnd === 1;
 
-            const isStreakable =
-                giftType === 1;
 
-            /*
-             * Do NOT count intermediate streak events.
-             *
-             * The final event contains the complete
-             * repeatCount and repeatEnd=true.
-             */
+            const isStreakable =
+                Number(giftType) === 1;
+
+
             const finalCount =
                 isStreakable
                     ? repeatEnd
@@ -475,134 +1015,191 @@ function createConnection() {
                         : 0
                     : repeatCount;
 
-            const totalDiamonds =
+
+            const diamondsForEvent =
                 finalCount > 0
                     ? diamondCount * finalCount
                     : 0;
 
-            const estimatedUsd =
-                totalDiamonds *
-                USD_PER_DIAMOND;
 
-            if (finalCount > 0) {
+            if (
+                finalCount > 0
+            ) {
 
                 liveState.gifts +=
                     finalCount;
 
-                liveState.diamonds +=
-                    totalDiamonds;
 
-                liveState.estimatedUsd +=
-                    estimatedUsd;
+                liveState.diamonds +=
+                    diamondsForEvent;
+
+
+                liveState.estimatedUsd =
+                    liveState.diamonds *
+                    DIAMOND_USD_VALUE;
+
             }
 
-            console.log(
-                `[GIFT] ${user} → ` +
-                `${giftName} ×${repeatCount} | ` +
-                `${diamondCount} 💎 each | ` +
-                `${totalDiamonds} 💎 total | ` +
-                `$${estimatedUsd.toFixed(2)} est.`
-            );
 
             broadcast({
+
                 type: "gift",
 
                 user,
+
                 nickname,
 
                 giftName,
+
                 giftId,
 
                 repeatCount,
 
                 diamondCount,
-                diamonds: totalDiamonds,
-
-                estimatedUsd,
 
                 giftType,
+
                 repeatEnd,
+
                 isStreakable,
 
-                countedAmount: finalCount
+                countedAmount:
+                    finalCount,
+
+                countedDiamonds:
+                    diamondsForEvent
+
             });
 
-            if (finalCount > 0) {
+
+            if (
+                finalCount > 0
+            ) {
+
                 broadcastStats();
+
             }
+
         }
     );
 
-    /* --------------------------------------------------------
+
+    /* ========================================================
        LIKES
-       -------------------------------------------------------- */
+       ======================================================== */
 
     connection.on(
         WebcastEvent.LIKE,
         data => {
 
             const total =
-                Number(
-                    data.totalLikeCount ??
-                    data.totalLikeCountStr ??
-                    liveState.likes
+                findLikeCount(
+                    data
                 );
 
-            liveState.likes = total;
 
-            console.log(
-                `[LIKE] Total likes: ${total}`
-            );
+            if (
+                total !== null &&
+                total >= liveState.likes
+            ) {
+
+                liveState.likes =
+                    total;
+
+            } else {
+
+                const batch =
+                    Number(
+                        data.likeCount ??
+                        data.count ??
+                        0
+                    );
+
+
+                if (
+                    Number.isFinite(batch) &&
+                    batch > 0
+                ) {
+
+                    liveState.likes +=
+                        batch;
+
+                } else {
+
+                    return;
+
+                }
+
+            }
+
 
             broadcast({
+
                 type: "likes",
-                total
+
+                total:
+                    liveState.likes
+
             });
 
+
             broadcastStats();
+
         }
     );
 
-    /* --------------------------------------------------------
+
+    /* ========================================================
        VIEWERS
-       -------------------------------------------------------- */
+       ======================================================== */
 
     connection.on(
         WebcastEvent.ROOM_USER,
         data => {
 
             const viewers =
-                Number(data.viewerCount);
+                Number(
+                    data.viewerCount
+                );
+
 
             if (
                 !Number.isFinite(viewers) ||
                 viewers < 0
             ) {
+
                 return;
+
             }
+
 
             liveState.viewers =
                 viewers;
 
+
             liveState.hasAuthoritativeViewerCount =
                 true;
 
-            console.log(
-                `[VIEWERS] Authoritative: ${viewers}`
-            );
 
             broadcast({
+
                 type: "viewers",
-                total: viewers
+
+                total:
+                    viewers
+
             });
 
+
             broadcastStats();
+
         }
     );
 
-    /* --------------------------------------------------------
+
+    /* ========================================================
        JOIN
-       -------------------------------------------------------- */
+       ======================================================== */
 
     connection.on(
         WebcastEvent.MEMBER,
@@ -614,21 +1211,18 @@ function createConnection() {
                 data.uniqueId ??
                 "unknown";
 
+
             const nickname =
                 data.user?.nickname ??
                 user;
 
-            console.log(
-                `[JOIN] ${user}`
-            );
 
             const memberCount =
-                Number(data.memberCount);
+                Number(
+                    data.memberCount
+                );
 
-            /*
-             * MEMBER is only a fallback.
-             * ROOM_USER remains authoritative.
-             */
+
             if (
                 !liveState.hasAuthoritativeViewerCount &&
                 Number.isFinite(memberCount) &&
@@ -638,29 +1232,39 @@ function createConnection() {
                 liveState.viewers =
                     memberCount;
 
-                console.log(
-                    `[VIEWERS] MEMBER fallback: ${memberCount}`
-                );
 
                 broadcast({
+
                     type: "viewers",
-                    total: memberCount
+
+                    total:
+                        memberCount
+
                 });
 
+
                 broadcastStats();
+
             }
 
+
             broadcast({
+
                 type: "join",
+
                 user,
+
                 nickname
+
             });
+
         }
     );
 
-    /* --------------------------------------------------------
+
+    /* ========================================================
        FOLLOW
-       -------------------------------------------------------- */
+       ======================================================== */
 
     connection.on(
         WebcastEvent.FOLLOW,
@@ -672,29 +1276,47 @@ function createConnection() {
                 data.uniqueId ??
                 "unknown";
 
+
             const nickname =
                 data.user?.nickname ??
                 user;
 
+
             liveState.newFollowers++;
 
-            console.log(
-                `[FOLLOW] ${user}`
-            );
+
+            if (
+                liveState.totalFollowers !== null &&
+                Number.isFinite(
+                    liveState.totalFollowers
+                )
+            ) {
+
+                liveState.totalFollowers++;
+
+            }
+
 
             broadcast({
+
                 type: "follow",
+
                 user,
+
                 nickname
+
             });
 
+
             broadcastStats();
+
         }
     );
 
-    /* --------------------------------------------------------
+
+    /* ========================================================
        FAN CLUB
-       -------------------------------------------------------- */
+       ======================================================== */
 
     connection.on(
         WebcastEvent.SUPER_FAN,
@@ -706,23 +1328,29 @@ function createConnection() {
                 data.uniqueId ??
                 "unknown";
 
+
             const nickname =
                 data.user?.nickname ??
                 user;
 
-            console.log(
-                `[FAN CLUB] ${user}`
-            );
 
             broadcast({
+
                 type: "fanclub",
+
                 user,
+
                 nickname
+
             });
+
         }
     );
 
-    if (WebcastEvent.SUPER_FAN_JOIN) {
+
+    if (
+        WebcastEvent.SUPER_FAN_JOIN
+    ) {
 
         connection.on(
             WebcastEvent.SUPER_FAN_JOIN,
@@ -734,58 +1362,29 @@ function createConnection() {
                     data.uniqueId ??
                     "unknown";
 
+
                 const nickname =
                     data.user?.nickname ??
                     user;
 
-                console.log(
-                    `[FAN CLUB JOIN] ${user}`
-                );
 
                 broadcast({
+
                     type: "fanclub",
+
                     user,
+
                     nickname
+
                 });
+
             }
         );
+
     }
+
 }
 
-/* ============================================================
-   FOLLOWER COUNT
-   ============================================================ */
-
-function updateFollowerCount(roomInfo) {
-
-    const candidates = [
-        roomInfo?.owner?.followInfo?.followerCount,
-        roomInfo?.owner?.followInfo?.followerCountStr,
-        roomInfo?.owner?.follow_info?.follower_count,
-        roomInfo?.followInfo?.followerCount,
-        roomInfo?.followInfo?.followerCountStr
-    ];
-
-    const value =
-        candidates.find(
-            value =>
-                value !== undefined &&
-                value !== null
-        );
-
-    if (value !== undefined) {
-
-        liveState.totalFollowers =
-            Number(value);
-
-        console.log(
-            `[FOLLOWERS] Channel total: ` +
-            `${liveState.totalFollowers}`
-        );
-
-        broadcastStats();
-    }
-}
 
 /* ============================================================
    CONNECT
@@ -795,71 +1394,124 @@ async function connectTikTok() {
 
     manualDisconnect = false;
 
-    if (reconnectTimer) {
-        clearTimeout(reconnectTimer);
+
+    if (
+        reconnectTimer
+    ) {
+
+        clearTimeout(
+            reconnectTimer
+        );
+
         reconnectTimer = null;
+
     }
+
 
     if (
         connection &&
         connection.isConnected
     ) {
+
         return;
+
     }
+
+
+    connecting = true;
+
 
     console.log(
         `[TIKTOK] Connecting to @${USERNAME}...`
     );
 
-    broadcast({
-        type: "status",
-        mode: "stream",
+
+    broadcastStatus({
+
         connected: false,
+
         connecting: true
+
     });
+
 
     try {
 
         createConnection();
 
+
         const state =
             await connection.connect();
 
-        if (state?.roomInfo) {
+
+        if (
+            state?.roomInfo
+        ) {
+
             updateFollowerCount(
                 state.roomInfo
             );
+
+            updateLikeCount(
+                state.roomInfo
+            );
+
         }
+
+
+        connecting = false;
+
+
+        broadcastStatus({
+
+            connected: true,
+
+            connecting: false
+
+        });
+
 
         console.log(
             "[TIKTOK] Connection established."
         );
 
+
     } catch (error) {
+
+        connecting = false;
+
 
         console.error(
             "[TIKTOK] Connection failed:",
             error
         );
 
-        broadcast({
-            type: "status",
-            mode: "stream",
+
+        broadcastStatus({
+
             connected: false,
+
             connecting: false,
+
             error:
                 error?.message ??
                 "Could not connect"
+
         });
 
+
         if (
-            currentMode === "stream" &&
             !manualDisconnect
         ) {
+
             scheduleReconnect();
+
         }
+
     }
+
 }
+
 
 /* ============================================================
    RECONNECT
@@ -867,16 +1519,23 @@ async function connectTikTok() {
 
 function scheduleReconnect() {
 
-    if (reconnectTimer) {
+    if (
+        reconnectTimer
+    ) {
+
         return;
+
     }
 
-    const delay = 5000;
+
+    const delay =
+        5000;
+
 
     console.log(
-        `[TIKTOK] Reconnecting in ` +
-        `${delay / 1000}s...`
+        `[TIKTOK] Reconnecting in ${delay / 1000}s...`
     );
+
 
     reconnectTimer =
         setTimeout(
@@ -884,19 +1543,24 @@ function scheduleReconnect() {
 
                 reconnectTimer = null;
 
+
                 if (
-                    currentMode !== "stream" ||
                     manualDisconnect
                 ) {
+
                     return;
+
                 }
+
 
                 await connectTikTok();
 
             },
             delay
         );
+
 }
+
 
 /* ============================================================
    DISCONNECT
@@ -906,123 +1570,153 @@ async function disconnectTikTok() {
 
     manualDisconnect = true;
 
-    if (reconnectTimer) {
-        clearTimeout(reconnectTimer);
+
+    connecting = false;
+
+
+    stopRoomStatsRefresh();
+
+
+    if (
+        reconnectTimer
+    ) {
+
+        clearTimeout(
+            reconnectTimer
+        );
+
         reconnectTimer = null;
+
     }
 
-    if (connection) {
+
+    if (
+        connection
+    ) {
 
         try {
+
             await connection.disconnect();
+
         } catch {}
 
         connection = null;
+
     }
 
-    broadcast({
-        type: "status",
-        mode: "test",
+
+    broadcastStatus({
+
         connected: false,
+
         connecting: false
+
     });
+
 }
 
+
 /* ============================================================
-   MODES
+   RECONNECT WITH NEW USERNAME
    ============================================================ */
 
-async function enterTestMode() {
-
-    console.log(
-        "[DOCK] Switching to TEST mode."
-    );
-
-    currentMode = "test";
+async function reconnectWithNewUsername() {
 
     await disconnectTikTok();
 
-    liveState.viewers =
-        testState.viewers;
 
-    liveState.likes =
-        testState.likes;
+    resetLiveState();
 
-    liveState.totalFollowers =
-        testState.totalFollowers;
-
-    liveState.newFollowers =
-        testState.newFollowers;
-
-    liveState.gifts =
-        testState.gifts;
-
-    liveState.diamonds =
-        testState.diamonds;
-
-    liveState.estimatedUsd =
-        testState.estimatedUsd;
-
-    liveState.hasAuthoritativeViewerCount =
-        false;
-
-    broadcast({
-        type: "status",
-        mode: "test",
-        connected: false,
-        connecting: false
-    });
 
     broadcastStats();
-}
 
-async function enterStreamMode() {
 
-    console.log(
-        "[DOCK] Confirm Live pressed."
-    );
+    broadcastStatus({
 
-    currentMode = "stream";
-
-    liveState.viewers = 0;
-    liveState.likes = 0;
-    liveState.newFollowers = 0;
-
-    liveState.gifts = 0;
-    liveState.diamonds = 0;
-    liveState.estimatedUsd = 0;
-
-    liveState.hasAuthoritativeViewerCount =
-        false;
-
-    broadcast({
-        type: "status",
-        mode: "stream",
         connected: false,
+
         connecting: true
+
     });
 
-    broadcastStats();
 
-    await connectTikTok();
+    const connectionPromise =
+        connectTikTok();
+
+
+    broadcast({
+
+        type: "usernameSaved",
+
+        username: USERNAME
+
+    });
+
+
+    await connectionPromise;
+
 }
+
 
 /* ============================================================
    STARTUP
    ============================================================ */
 
 console.log("");
-console.log("=================================");
-console.log("          TikTok Dock");
-console.log("=================================");
-console.log(`Username: @${USERNAME}`);
-console.log(`Dock: http://localhost:${PORT}`);
-console.log("TEST mode enabled.");
-console.log("STREAM mode requires confirmation.");
-console.log("Extended gift info: DISABLED");
-console.log("Hardware monitoring: DISABLED");
+
 console.log(
-    `Diamond estimate: $${USD_PER_DIAMOND.toFixed(3)} / diamond`
+    "================================="
 );
-console.log("=================================");
+
+console.log(
+    "          TikTok Dock"
+);
+
+console.log(
+    "================================="
+);
+
+console.log(
+    `Username: @${USERNAME}`
+);
+
+console.log(
+    `Stats Dock: http://localhost:${PORT}`
+);
+
+console.log(
+    `Alerts Dock: http://localhost:${PORT}/alerts.html`
+);
+
+console.log(
+    "No Test Mode"
+);
+
+console.log(
+    "Diamond tracking: ENABLED"
+);
+
+console.log(
+    `Estimated diamond USD: $${DIAMOND_USD_VALUE}`
+);
+
+console.log(
+    "================================="
+);
+
 console.log("");
+
+
+/*
+ * Automatically connect to the saved username
+ * when the server starts.
+ */
+
+setTimeout(
+    () => {
+
+        connectTikTok();
+
+    },
+    500
+);

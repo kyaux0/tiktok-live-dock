@@ -1,0 +1,1747 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+>
+
+<title>TikTok LIVE Alerts</title>
+
+
+<style>
+
+/* ============================================================
+   GLOBAL
+   ============================================================ */
+
+* {
+    box-sizing: border-box;
+}
+
+
+html,
+body {
+
+    margin: 0;
+
+    width: 100%;
+
+    height: 100%;
+
+}
+
+
+body {
+
+    padding: 8px;
+
+    background:
+        #08090c;
+
+    color:
+        #ffffff;
+
+    font-family:
+        Inter,
+        "Segoe UI",
+        Arial,
+        Helvetica,
+        sans-serif;
+
+    overflow: hidden;
+
+    -webkit-font-smoothing:
+        antialiased;
+
+    text-rendering:
+        optimizeLegibility;
+}
+
+
+/* ============================================================
+   MAIN DOCK
+   ============================================================ */
+
+.dock {
+
+    width: 100%;
+
+    height: 100%;
+
+    max-width: 900px;
+
+    margin: 0 auto;
+
+    display: flex;
+
+    flex-direction: column;
+
+    background:
+        linear-gradient(
+            180deg,
+            rgba(22,23,29,0.98),
+            rgba(13,14,18,0.98)
+        );
+
+    border:
+        1px solid
+        rgba(255,255,255,0.09);
+
+    border-radius:
+        12px;
+
+    overflow:
+        hidden;
+
+    box-shadow:
+        0 12px 35px
+        rgba(0,0,0,0.40);
+}
+
+
+/* ============================================================
+   HEADER
+   ============================================================ */
+
+.feed-header {
+
+    flex:
+        0 0 auto;
+
+    display:
+        flex;
+
+    align-items:
+        center;
+
+    justify-content:
+        space-between;
+
+    min-height:
+        40px;
+
+    padding:
+        0 12px;
+
+    border-bottom:
+        1px solid
+        rgba(255,255,255,0.055);
+
+    background:
+        rgba(255,255,255,0.045);
+}
+
+
+.feed-title {
+
+    display:
+        flex;
+
+    align-items:
+        center;
+
+    gap:
+        8px;
+
+    color:
+        #d7d8dc;
+
+    font-size:
+        11px;
+
+    line-height:
+        1;
+
+    font-weight:
+        850;
+
+    letter-spacing:
+        0.45px;
+}
+
+
+.live-indicator {
+
+    width:
+        7px;
+
+    height:
+        7px;
+
+    flex:
+        0 0 7px;
+
+    border-radius:
+        50%;
+
+    background:
+        #ef4444;
+
+    box-shadow:
+        0 0 8px
+        rgba(239,68,68,0.45);
+
+}
+
+
+/* ============================================================
+   FEED
+   ============================================================ */
+
+.feed {
+
+    flex:
+        1 1 auto;
+
+    min-height:
+        0;
+
+    padding:
+        7px;
+
+    overflow-y:
+        auto;
+
+    overflow-x:
+        hidden;
+
+    display:
+        flex;
+
+    flex-direction:
+        column;
+
+    gap:
+        5px;
+
+    scroll-behavior:
+        smooth;
+}
+
+
+.feed::-webkit-scrollbar {
+
+    width:
+        5px;
+
+}
+
+
+.feed::-webkit-scrollbar-track {
+
+    background:
+        transparent;
+
+}
+
+
+.feed::-webkit-scrollbar-thumb {
+
+    background:
+        #30323a;
+
+    border-radius:
+        10px;
+
+}
+
+
+/* ============================================================
+   EVENT BASE
+   ============================================================ */
+
+.event {
+
+    flex:
+        0 0 auto;
+
+    display:
+        grid;
+
+    grid-template-columns:
+        30px minmax(0, 1fr) auto;
+
+    align-items:
+        center;
+
+    gap:
+        8px;
+
+    width:
+        100%;
+
+    min-width:
+        0;
+
+    padding:
+        7px 8px;
+
+    border:
+        1px solid
+        rgba(255,255,255,0.045);
+
+    border-radius:
+        8px;
+
+    background:
+        rgba(255,255,255,0.035);
+
+    /*
+     * These properties are animated for JOIN
+     * events when they expire.
+     */
+
+    opacity:
+        1;
+
+    max-height:
+        120px;
+
+    margin-top:
+        0;
+
+    margin-bottom:
+        0;
+
+    transform:
+        translateY(0);
+
+    transition:
+        opacity 0.45s ease,
+        max-height 0.45s ease,
+        margin 0.45s ease,
+        padding 0.45s ease,
+        transform 0.35s ease;
+}
+
+
+/* ============================================================
+   NEW EVENT ANIMATION
+   ============================================================ */
+
+.event.entering {
+
+    animation:
+        eventEnter
+        0.25s
+        ease-out;
+}
+
+
+@keyframes eventEnter {
+
+    from {
+
+        opacity:
+            0;
+
+        transform:
+            translateY(-7px)
+            scale(0.985);
+
+    }
+
+    to {
+
+        opacity:
+            1;
+
+        transform:
+            translateY(0)
+            scale(1);
+
+    }
+
+}
+
+
+/* ============================================================
+   JOIN EXPIRATION
+   ============================================================ */
+
+.event.expiring {
+
+    opacity:
+        0;
+
+    max-height:
+        0;
+
+    margin-top:
+        -5px;
+
+    margin-bottom:
+        -5px;
+
+    padding-top:
+        0;
+
+    padding-bottom:
+        0;
+
+    border-width:
+        0;
+
+    transform:
+        translateY(-3px);
+}
+
+
+/* ============================================================
+   ICON
+   ============================================================ */
+
+.icon {
+
+    width:
+        30px;
+
+    height:
+        30px;
+
+    display:
+        flex;
+
+    align-items:
+        center;
+
+    justify-content:
+        center;
+
+    flex:
+        0 0 30px;
+
+    border-radius:
+        8px;
+
+    background:
+        rgba(255,255,255,0.065);
+
+    font-size:
+        14px;
+
+    line-height:
+        1;
+}
+
+
+/* ============================================================
+   EVENT MAIN
+   ============================================================ */
+
+.event-main {
+
+    min-width:
+        0;
+
+    display:
+        flex;
+
+    flex-direction:
+        column;
+
+    justify-content:
+        center;
+}
+
+
+/* ============================================================
+   USERNAME
+   ============================================================ */
+
+.event-user {
+
+    min-width:
+        0;
+
+    color:
+        #f1f1f2;
+
+    font-size:
+        11px;
+
+    line-height:
+        1.15;
+
+    font-weight:
+        850;
+
+    white-space:
+        nowrap;
+
+    overflow:
+        hidden;
+
+    text-overflow:
+        ellipsis;
+}
+
+
+/* ============================================================
+   EVENT CONTENT
+   ============================================================ */
+
+.event-text {
+
+    margin-top:
+        4px;
+
+    color:
+        #d0d1d5;
+
+    font-size:
+        11px;
+
+    line-height:
+        1.3;
+
+    font-weight:
+        600;
+
+    white-space:
+        normal;
+
+    overflow-wrap:
+        anywhere;
+
+    word-break:
+        break-word;
+}
+
+
+/* ============================================================
+   COMMENT
+   ============================================================ */
+
+.event.comment {
+
+    padding-top:
+        8px;
+
+    padding-bottom:
+        8px;
+}
+
+
+.event.comment .event-text {
+
+    color:
+        #eeeeef;
+
+    font-size:
+        12px;
+
+    line-height:
+        1.35;
+
+    font-weight:
+        600;
+}
+
+
+/* ============================================================
+   GIFT
+   ============================================================ */
+
+.event.gift {
+
+    padding-top:
+        8px;
+
+    padding-bottom:
+        8px;
+}
+
+
+.event.gift .event-text {
+
+    color:
+        #e1e2e5;
+
+    font-size:
+        11px;
+
+    line-height:
+        1.3;
+
+    font-weight:
+        700;
+}
+
+
+.event.gift .icon {
+
+    background:
+        rgba(245,158,11,0.10);
+}
+
+
+/* ============================================================
+   FAN CLUB
+   ============================================================ */
+
+.event.fanclub .icon {
+
+    background:
+        rgba(250,204,21,0.10);
+}
+
+
+.event.fanclub .event-text {
+
+    color:
+        #e1e2e5;
+
+    font-size:
+        11px;
+
+    font-weight:
+        650;
+}
+
+
+/* ============================================================
+   FOLLOW
+   ============================================================ */
+
+/*
+ * Follows intentionally contain NO secondary text.
+ * This keeps them extremely compact.
+ */
+
+.event.follow {
+
+    grid-template-columns:
+        30px minmax(0, 1fr);
+
+    min-height:
+        38px;
+
+    padding-top:
+        4px;
+
+    padding-bottom:
+        4px;
+}
+
+
+.event.follow .event-user {
+
+    font-size:
+        11px;
+
+}
+
+
+.event.follow .icon {
+
+    background:
+        rgba(34,197,94,0.09);
+}
+
+
+/* ============================================================
+   JOIN
+   ============================================================ */
+
+/*
+ * Joins intentionally contain NO secondary text.
+ * They are temporary and disappear after 15 seconds.
+ */
+
+.event.join {
+
+    grid-template-columns:
+        30px minmax(0, 1fr);
+
+    min-height:
+        38px;
+
+    padding-top:
+        4px;
+
+    padding-bottom:
+        4px;
+}
+
+
+.event.join .event-user {
+
+    font-size:
+        11px;
+
+}
+
+
+.event.join .icon {
+
+    background:
+        rgba(96,165,250,0.09);
+}
+
+
+/* ============================================================
+   RIGHT-SIDE VALUE
+   ============================================================ */
+
+.event-value {
+
+    max-width:
+        110px;
+
+    padding-left:
+        5px;
+
+    color:
+        #c7c9ce;
+
+    font-size:
+        10px;
+
+    line-height:
+        1.1;
+
+    font-weight:
+        800;
+
+    text-align:
+        right;
+
+    white-space:
+        nowrap;
+
+    overflow:
+        hidden;
+
+    text-overflow:
+        ellipsis;
+}
+
+
+/* ============================================================
+   EMPTY
+   ============================================================ */
+
+.empty {
+
+    flex:
+        1 1 auto;
+
+    min-height:
+        100px;
+
+    display:
+        flex;
+
+    align-items:
+        center;
+
+    justify-content:
+        center;
+
+    padding:
+        20px;
+
+    color:
+        #50535c;
+
+    font-size:
+        10px;
+
+    line-height:
+        1.3;
+
+    font-weight:
+        650;
+
+    text-align:
+        center;
+}
+
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+
+@media (max-width: 500px) {
+
+    body {
+
+        padding:
+            5px;
+
+    }
+
+
+    .feed-header {
+
+        min-height:
+            36px;
+
+        padding:
+            0 9px;
+
+    }
+
+
+    .feed-title {
+
+        font-size:
+            10px;
+
+    }
+
+
+    .feed {
+
+        padding:
+            5px;
+
+        gap:
+            4px;
+
+    }
+
+
+    .event {
+
+        grid-template-columns:
+            27px minmax(0, 1fr) auto;
+
+        gap:
+            6px;
+
+        padding:
+            6px;
+
+    }
+
+
+    .icon {
+
+        width:
+            27px;
+
+        height:
+            27px;
+
+        flex-basis:
+            27px;
+
+        font-size:
+            13px;
+
+    }
+
+
+    .event-user {
+
+        font-size:
+            10px;
+
+    }
+
+
+    .event-text {
+
+        font-size:
+            10px;
+
+    }
+
+
+    .event.comment .event-text {
+
+        font-size:
+            11px;
+
+    }
+
+
+    .event-value {
+
+        max-width:
+            80px;
+
+        font-size:
+            9px;
+
+    }
+
+
+    .event.follow,
+    .event.join {
+
+        grid-template-columns:
+            27px minmax(0, 1fr);
+
+    }
+
+}
+
+
+</style>
+
+</head>
+
+
+<body>
+
+
+<div class="dock">
+
+
+    <!-- ======================================================
+         HEADER
+         ====================================================== -->
+
+    <div class="feed-header">
+
+        <div class="feed-title">
+
+            <div class="live-indicator"></div>
+
+            <span>
+                LIVE ACTIVITY
+            </span>
+
+        </div>
+
+    </div>
+
+
+    <!-- ======================================================
+         UNIFIED FEED
+         ====================================================== -->
+
+    <div
+        id="activityFeed"
+        class="feed"
+    >
+
+        <div
+            id="emptyState"
+            class="empty"
+        >
+            Waiting for LIVE activity...
+        </div>
+
+    </div>
+
+
+</div>
+
+
+<script>
+
+/* ============================================================
+   STATE
+   ============================================================ */
+
+let socket = null;
+
+
+/*
+ * Maximum number of permanent events kept in the feed.
+ *
+ * JOIN events are removed automatically after 15 seconds,
+ * while comments/gifts/follows remain until pushed out.
+ */
+
+const MAX_EVENTS = 60;
+
+
+/*
+ * Joined LIVE alerts disappear after exactly 15 seconds.
+ */
+
+const JOIN_LIFETIME = 5000;
+
+
+/* ============================================================
+   ELEMENTS
+   ============================================================ */
+
+const activityFeed =
+    document.getElementById(
+        "activityFeed"
+    );
+
+
+const emptyState =
+    document.getElementById(
+        "emptyState"
+    );
+
+
+/* ============================================================
+   WEBSOCKET
+   ============================================================ */
+
+function connectWebSocket() {
+
+    socket =
+        new WebSocket(
+            "ws://localhost:3001"
+        );
+
+
+    socket.addEventListener(
+        "open",
+        () => {
+
+            console.log(
+                "[ALERTS] Connected to dock server."
+            );
+
+        }
+    );
+
+
+    socket.addEventListener(
+        "message",
+        event => {
+
+            try {
+
+                const data =
+                    JSON.parse(
+                        event.data
+                    );
+
+
+                handleEvent(data);
+
+            } catch (error) {
+
+                console.error(
+                    "[ALERTS] Invalid server message:",
+                    error
+                );
+
+            }
+
+        }
+    );
+
+
+    socket.addEventListener(
+        "close",
+        () => {
+
+            console.log(
+                "[ALERTS] Connection closed. Reconnecting..."
+            );
+
+
+            setTimeout(
+                connectWebSocket,
+                2000
+            );
+
+        }
+    );
+
+
+    socket.addEventListener(
+        "error",
+        () => {
+
+            /*
+             * The close event will handle reconnecting.
+             */
+
+        }
+    );
+
+}
+
+
+/* ============================================================
+   EVENT HANDLER
+   ============================================================ */
+
+function handleEvent(data) {
+
+
+    /* --------------------------------------------------------
+       CHAT
+       -------------------------------------------------------- */
+
+    if (
+        data.type === "chat"
+    ) {
+
+        addComment(
+            data.nickname ??
+            data.user ??
+            "unknown",
+
+            data.text ??
+            "(empty message)"
+        );
+
+
+        return;
+
+    }
+
+
+    /* --------------------------------------------------------
+       GIFT
+       -------------------------------------------------------- */
+
+    if (
+        data.type === "gift"
+    ) {
+
+        const name =
+            data.nickname ??
+            data.user ??
+            "unknown";
+
+
+        const gift =
+            data.giftName ??
+            "Gift";
+
+
+        const count =
+            Number(
+                data.countedAmount ??
+                data.repeatCount ??
+                1
+            );
+
+
+        const safeCount =
+            Math.max(
+                1,
+                count
+            );
+
+
+        let description =
+            `${gift} ×${safeCount}`;
+
+
+        let value =
+            "";
+
+
+        /*
+         * Streakable gifts that haven't ended yet
+         * should remain marked as a streak.
+         */
+
+        if (
+            data.isStreakable &&
+            !data.repeatEnd
+        ) {
+
+            value =
+                "streak...";
+
+        } else {
+
+            const countedDiamonds =
+                Number(
+                    data.countedDiamonds ??
+                    0
+                );
+
+
+            if (
+                countedDiamonds > 0
+            ) {
+
+                value =
+                    `${formatNumber(
+                        countedDiamonds
+                    )} 💎`;
+
+            }
+
+        }
+
+
+        addEvent({
+
+            type:
+                "gift",
+
+            icon:
+                "🎁",
+
+            user:
+                name,
+
+            text:
+                description,
+
+            value:
+                value
+
+        });
+
+
+        return;
+
+    }
+
+
+    /* --------------------------------------------------------
+       FOLLOW
+       -------------------------------------------------------- */
+
+    if (
+        data.type === "follow"
+    ) {
+
+        addEvent({
+
+            type:
+                "follow",
+
+            icon:
+                "➕",
+
+            user:
+                data.nickname ??
+                data.user ??
+                "unknown",
+
+            text:
+                "",
+
+            value:
+                ""
+
+        });
+
+
+        return;
+
+    }
+
+
+    /* --------------------------------------------------------
+       JOIN
+       -------------------------------------------------------- */
+
+    if (
+        data.type === "join"
+    ) {
+
+        const event =
+            addEvent({
+
+                type:
+                    "join",
+
+                icon:
+                    "👋",
+
+                user:
+                    data.nickname ??
+                    data.user ??
+                    "unknown",
+
+                text:
+                    "",
+
+                value:
+                    ""
+
+            });
+
+
+        /*
+         * Remove this event after 15 seconds.
+         *
+         * First it fades and collapses.
+         * The DOM element is removed only after
+         * the CSS transition has completed.
+         */
+
+        setTimeout(
+            () => {
+
+                expireJoin(
+                    event
+                );
+
+            },
+            JOIN_LIFETIME
+        );
+
+
+        return;
+
+    }
+
+
+    /* --------------------------------------------------------
+       FAN CLUB
+       -------------------------------------------------------- */
+
+    if (
+        data.type === "fanclub"
+    ) {
+
+        addEvent({
+
+            type:
+                "fanclub",
+
+            icon:
+                "⭐",
+
+            user:
+                data.nickname ??
+                data.user ??
+                "unknown",
+
+            text:
+                "joined the Fan Club",
+
+            value:
+                ""
+
+        });
+
+
+        return;
+
+    }
+
+}
+
+
+/* ============================================================
+   ADD COMMENT
+   ============================================================ */
+
+function addComment(
+    user,
+    text
+) {
+
+    addEvent({
+
+        type:
+            "comment",
+
+        icon:
+            "💬",
+
+        user:
+            user,
+
+        text:
+            text,
+
+        value:
+            ""
+
+    });
+
+}
+
+
+/* ============================================================
+   ADD EVENT
+   ============================================================ */
+
+function addEvent({
+    type,
+    icon,
+    user,
+    text = "",
+    value = ""
+}) {
+
+    /*
+     * Remove the empty-state message.
+     */
+
+    if (
+        emptyState &&
+        emptyState.parentNode
+    ) {
+
+        emptyState.remove();
+
+    }
+
+
+    const event =
+        document.createElement(
+            "div"
+        );
+
+
+    event.className =
+        `event ${type} entering`;
+
+
+    /*
+     * ICON
+     */
+
+    const iconElement =
+        document.createElement(
+            "div"
+        );
+
+
+    iconElement.className =
+        "icon";
+
+
+    iconElement.textContent =
+        icon;
+
+
+    /*
+     * MAIN CONTENT
+     */
+
+    const main =
+        document.createElement(
+            "div"
+        );
+
+
+    main.className =
+        "event-main";
+
+
+    /*
+     * USERNAME
+     */
+
+    const userElement =
+        document.createElement(
+            "div"
+        );
+
+
+    userElement.className =
+        "event-user";
+
+
+    userElement.textContent =
+        user;
+
+
+    main.appendChild(
+        userElement
+    );
+
+
+    /*
+     * SECONDARY TEXT
+     *
+     * Follows and joins intentionally don't
+     * create this element.
+     */
+
+    if (
+        text
+    ) {
+
+        const textElement =
+            document.createElement(
+                "div"
+            );
+
+
+        textElement.className =
+            "event-text";
+
+
+        textElement.textContent =
+            text;
+
+
+        main.appendChild(
+            textElement
+        );
+
+    }
+
+
+    /*
+     * RIGHT-SIDE VALUE
+     */
+
+    const valueElement =
+        document.createElement(
+            "div"
+        );
+
+
+    valueElement.className =
+        "event-value";
+
+
+    valueElement.textContent =
+        value;
+
+
+    /*
+     * Follows and joins don't need
+     * the right-side value column.
+     */
+
+    if (
+        type === "follow" ||
+        type === "join"
+    ) {
+
+        event.appendChild(
+            iconElement
+        );
+
+
+        event.appendChild(
+            main
+        );
+
+    } else {
+
+        event.appendChild(
+            iconElement
+        );
+
+
+        event.appendChild(
+            main
+        );
+
+
+        event.appendChild(
+            valueElement
+        );
+
+    }
+
+
+    /*
+     * Newest event goes at the top.
+     */
+
+    activityFeed.prepend(
+        event
+    );
+
+
+    /*
+     * Remove the animation class after
+     * the entrance animation completes.
+     */
+
+    setTimeout(
+        () => {
+
+            event.classList.remove(
+                "entering"
+            );
+
+        },
+        300
+    );
+
+
+    /*
+     * Keep the feed bounded.
+     *
+     * JOIN events can disappear naturally,
+     * while permanent events are removed from
+     * the bottom once the feed gets too large.
+     */
+
+    trimFeed();
+
+
+    return event;
+
+}
+
+
+/* ============================================================
+   EXPIRE JOIN
+   ============================================================ */
+
+function expireJoin(
+    event
+) {
+
+    if (
+        !event ||
+        !event.isConnected
+    ) {
+
+        return;
+
+    }
+
+
+    /*
+     * Start the fade + collapse animation.
+     */
+
+    event.classList.add(
+        "expiring"
+    );
+
+
+    /*
+     * Wait for the CSS transition to finish,
+     * then remove the element completely.
+     */
+
+    setTimeout(
+        () => {
+
+            if (
+                event.isConnected
+            ) {
+
+                event.remove();
+
+            }
+
+
+            /*
+             * If the feed is now empty,
+             * restore the waiting message.
+             */
+
+            restoreEmptyStateIfNeeded();
+
+        },
+        500
+    );
+
+}
+
+
+/* ============================================================
+   TRIM FEED
+   ============================================================ */
+
+function trimFeed() {
+
+    const events =
+        activityFeed.querySelectorAll(
+            ".event"
+        );
+
+
+    while (
+        events.length > MAX_EVENTS
+    ) {
+
+        /*
+         * Always remove the oldest event.
+         */
+
+        const oldest =
+            activityFeed.querySelector(
+                ".event:last-child"
+            );
+
+
+        if (
+            !oldest
+        ) {
+
+            break;
+
+        }
+
+
+        oldest.remove();
+
+    }
+
+}
+
+
+/* ============================================================
+   EMPTY STATE
+   ============================================================ */
+
+function restoreEmptyStateIfNeeded() {
+
+    const events =
+        activityFeed.querySelectorAll(
+            ".event"
+        );
+
+
+    if (
+        events.length === 0
+    ) {
+
+        const empty =
+            document.createElement(
+                "div"
+            );
+
+
+        empty.id =
+            "emptyState";
+
+
+        empty.className =
+            "empty";
+
+
+        empty.textContent =
+            "Waiting for LIVE activity...";
+
+
+        activityFeed.appendChild(
+            empty
+        );
+
+    }
+
+}
+
+
+/* ============================================================
+   NUMBER FORMAT
+   ============================================================ */
+
+function formatNumber(
+    number
+) {
+
+    return Number(
+        number ?? 0
+    ).toLocaleString();
+
+}
+
+
+/* ============================================================
+   START
+   ============================================================ */
+
+connectWebSocket();
+
+</script>
+
+
+</body>
+
+</html>

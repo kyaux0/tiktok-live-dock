@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
 
 <meta charset="UTF-8">
@@ -9,7 +10,7 @@
     content="width=device-width, initial-scale=1.0"
 >
 
-<title>TikTok LIVE Dock</title>
+<title>TikTok LIVE Stats</title>
 
 <style>
 
@@ -17,212 +18,232 @@
     box-sizing: border-box;
 }
 
+html,
 body {
     margin: 0;
-    padding: 12px;
+    width: 100%;
+    min-height: 100%;
+}
 
-    background-color: #000;
+body {
 
-    color: #fff;
+    padding: 10px;
+
+    background: #08090c;
+
+    color: #ffffff;
 
     font-family:
         Inter,
+        "Segoe UI",
         Arial,
         Helvetica,
         sans-serif;
 
-    overflow: hidden;
+    -webkit-font-smoothing: antialiased;
+
+    text-rendering: optimizeLegibility;
 }
 
 .dock {
-    width: 100%;
-    max-width: 600px;
 
-    margin: auto;
+    width: 100%;
+
+    max-width: 900px;
+
+    margin: 0 auto;
+
+    padding: 12px;
 
     background:
-        rgba(14, 14, 18, 0.97);
+        linear-gradient(
+            180deg,
+            rgba(22,23,29,0.98),
+            rgba(13,14,18,0.98)
+        );
 
     border:
         1px solid
-        rgba(255,255,255,0.10);
+        rgba(255,255,255,0.08);
 
-    border-radius: 13px;
-
-    padding: 14px;
+    border-radius: 12px;
 
     box-shadow:
         0 10px 30px
         rgba(0,0,0,0.35);
 }
 
-/* HEADER */
 
-.header {
+/* ============================================================
+   TOP BAR
+   ============================================================ */
+
+.topbar {
+
     display: flex;
-    justify-content: space-between;
+
     align-items: center;
 
-    margin-bottom: 12px;
+    justify-content: space-between;
+
+    gap: 10px;
+
+    margin-bottom: 10px;
+}
+
+.identity {
+
+    min-width: 0;
 }
 
 .title {
-    font-size: 18px;
-    font-weight: 800;
+
+    font-size: 16px;
+
+    line-height: 1;
+
+    font-weight: 850;
+
+    letter-spacing: -0.2px;
 }
 
-.username {
-    margin-top: 2px;
+.username-display {
 
-    color: #888;
+    margin-top: 4px;
 
-    font-size: 11px;
-}
-
-.status {
-    display: flex;
-    align-items: center;
-
-    gap: 6px;
+    color: #747780;
 
     font-size: 10px;
+
     font-weight: 700;
-
-    color: #999;
 }
 
-.status-dot {
-    width: 8px;
-    height: 8px;
 
-    border-radius: 50%;
+/* ============================================================
+   STATUS
+   ============================================================ */
 
-    background: #777;
-}
+.status {
 
-.status-dot.test {
-    background: #f59e0b;
-}
+    display: flex;
 
-.status-dot.online {
-    background: #22c55e;
-}
-
-.status-dot.connecting {
-    background: #eab308;
-}
-
-/* CONTROLS */
-
-.controls {
-    display: grid;
-
-    grid-template-columns:
-        1fr 1fr;
+    align-items: center;
 
     gap: 7px;
 
-    margin-bottom: 7px;
-}
+    flex-shrink: 0;
 
-button {
-    border: none;
+    padding: 7px 10px;
 
-    border-radius: 8px;
-
-    padding: 8px;
-
-    background:
+    border:
+        1px solid
         rgba(255,255,255,0.07);
 
-    color: #aaa;
-
-    font-size: 11px;
-    font-weight: 800;
-
-    cursor: pointer;
-}
-
-button:hover {
-    background:
-        rgba(255,255,255,0.12);
-}
-
-button.active {
-    background:
-        rgba(255,255,255,0.16);
-
-    color: #fff;
-}
-
-.confirm {
-    width: 100%;
-
-    margin-bottom: 12px;
-
-    background:
-        rgba(34,197,94,0.16);
-
-    color: #6ee7a0;
-}
-
-/* ERROR */
-
-.error {
-    margin-bottom: 8px;
-
-    padding: 7px 9px;
-
-    border-radius: 7px;
-
-    background:
-        rgba(239,68,68,0.10);
-
-    color: #f87171;
-
-    font-size: 9px;
-}
-
-/* STATS */
-
-.stats {
-    display: grid;
-
-    grid-template-columns:
-        repeat(4, 1fr);
-
-    gap: 6px;
-
-    margin-bottom: 12px;
-}
-
-.stat {
-    min-width: 0;
-
-    padding: 8px;
-
     border-radius: 8px;
 
     background:
-        rgba(255,255,255,0.045);
-}
+        rgba(255,255,255,0.035);
 
-.stat-label {
-    font-size: 8px;
+    color: #a5a8b0;
 
-    color: #777;
+    font-size: 9px;
 
-    font-weight: 700;
-
-    margin-bottom: 3px;
+    font-weight: 850;
 
     white-space: nowrap;
 }
 
-.stat-value {
-    font-size: 15px;
+.status-dot {
 
-    font-weight: 800;
+    width: 8px;
+
+    height: 8px;
+
+    border-radius: 50%;
+
+    background: #ef4444;
+}
+
+.status-dot.online {
+
+    background: #22c55e;
+
+    box-shadow:
+        0 0 9px
+        rgba(34,197,94,0.45);
+}
+
+.status-dot.connecting {
+
+    background: #eab308;
+
+    box-shadow:
+        0 0 8px
+        rgba(234,179,8,0.4);
+}
+
+
+/* ============================================================
+   STATS
+   ============================================================ */
+
+.stats {
+
+    display: grid;
+
+    grid-template-columns:
+        repeat(6, minmax(0, 1fr));
+
+    gap: 7px;
+
+    margin-bottom: 9px;
+}
+
+.stat {
+
+    min-width: 0;
+
+    padding:
+        9px 8px;
+
+    border:
+        1px solid
+        rgba(255,255,255,0.055);
+
+    border-radius: 9px;
+
+    background:
+        rgba(255,255,255,0.035);
+
+    text-align: center;
+}
+
+.stat-icon {
+
+    height: 20px;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    margin-bottom: 3px;
+
+    font-size: 15px;
+}
+
+.stat-value {
+
+    color: #f4f4f5;
+
+    font-size: 16px;
+
+    line-height: 1.05;
+
+    font-weight: 850;
+
+    letter-spacing: -0.25px;
 
     white-space: nowrap;
 
@@ -232,149 +253,200 @@ button.active {
 }
 
 .stat-sub {
-    margin-top: 1px;
 
-    font-size: 8px;
+    margin-top: 3px;
 
-    color: #777;
+    color: #656872;
+
+    font-size: 7px;
+
+    line-height: 1;
+
+    font-weight: 750;
+
+    white-space: nowrap;
+
+    overflow: hidden;
+
+    text-overflow: ellipsis;
 }
 
-/* FEED */
 
-.feed-title {
+/* ============================================================
+   USERNAME
+   ============================================================ */
+
+.username-section {
+
     display: flex;
-
-    justify-content:
-        space-between;
-
-    align-items: center;
-
-    margin-bottom: 6px;
-}
-
-.feed-title span:first-child {
-    font-size: 10px;
-
-    font-weight: 800;
-
-    color: #aaa;
-
-    letter-spacing: 0.4px;
-}
-
-.feed-title span:last-child {
-    font-size: 8px;
-
-    color: #555;
-}
-
-.feed {
-    display: flex;
-
-    flex-direction: column;
-
-    gap: 5px;
-
-    max-height: 310px;
-
-    overflow-y: auto;
-}
-
-.feed::-webkit-scrollbar {
-    width: 4px;
-}
-
-.feed::-webkit-scrollbar-thumb {
-    background: #333;
-
-    border-radius: 10px;
-}
-
-.event {
-    display: grid;
-
-    grid-template-columns:
-        25px 1fr auto;
-
-    align-items: center;
 
     gap: 7px;
 
-    padding: 7px 8px;
+    align-items: center;
+}
+
+.username-input {
+
+    flex: 1;
+
+    min-width: 0;
+
+    height: 34px;
+
+    padding:
+        0 10px;
+
+    border:
+        1px solid
+        rgba(255,255,255,0.08);
+
+    border-radius: 8px;
+
+    outline: none;
+
+    background:
+        rgba(255,255,255,0.045);
+
+    color: #eeeeef;
+
+    font-family: inherit;
+
+    font-size: 10px;
+
+    font-weight: 700;
+}
+
+.username-input::placeholder {
+
+    color: #555861;
+}
+
+.username-input:focus {
+
+    border-color:
+        rgba(255,255,255,0.18);
+
+    background:
+        rgba(255,255,255,0.06);
+}
+
+.connect-button {
+
+    height: 34px;
+
+    padding:
+        0 13px;
+
+    border:
+        1px solid
+        rgba(34,197,94,0.22);
+
+    border-radius: 8px;
+
+    background:
+        rgba(34,197,94,0.12);
+
+    color: #70e69d;
+
+    font-family: inherit;
+
+    font-size: 9px;
+
+    font-weight: 850;
+
+    cursor: pointer;
+
+    white-space: nowrap;
+}
+
+.connect-button:hover {
+
+    background:
+        rgba(34,197,94,0.18);
+
+    color: #9af2bb;
+}
+
+
+/* ============================================================
+   ERROR
+   ============================================================ */
+
+.error {
+
+    margin-top: 7px;
+
+    padding:
+        7px 9px;
+
+    border:
+        1px solid
+        rgba(239,68,68,0.15);
 
     border-radius: 7px;
 
     background:
-        rgba(255,255,255,0.045);
-}
+        rgba(239,68,68,0.07);
 
-.icon {
-    width: 25px;
-    height: 25px;
+    color: #f87171;
 
-    display: flex;
-
-    align-items: center;
-    justify-content: center;
-
-    border-radius: 6px;
-
-    background:
-        rgba(255,255,255,0.07);
-
-    font-size: 12px;
-}
-
-.event-main {
-    min-width: 0;
-}
-
-.event-user {
-    font-size: 11px;
-
-    font-weight: 800;
-
-    white-space: nowrap;
-
-    overflow: hidden;
-
-    text-overflow: ellipsis;
-}
-
-.event-text {
-    margin-top: 1px;
-
-    font-size: 10px;
-
-    color: #999;
-
-    white-space: nowrap;
-
-    overflow: hidden;
-
-    text-overflow: ellipsis;
-}
-
-.event-value {
     font-size: 9px;
-
-    font-weight: 800;
-
-    color: #aaa;
-
-    white-space: nowrap;
-
-    text-align: right;
 }
 
-.empty {
-    padding: 22px;
 
-    text-align: center;
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
 
-    color: #555;
+@media (max-width: 650px) {
 
-    font-size: 10px;
+    .stats {
+
+        grid-template-columns:
+            repeat(3, minmax(0, 1fr));
+
+    }
+
+}
+
+@media (max-width: 400px) {
+
+    .topbar {
+
+        align-items:
+            flex-start;
+
+    }
+
+    .status {
+
+        font-size: 8px;
+
+        padding:
+            6px 7px;
+
+    }
+
+    .stats {
+
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
+
+    }
+
+    .username-section {
+
+        flex-direction: column;
+
+    }
+
+    .username-input,
+    .connect-button {
+
+        width: 100%;
+
+    }
+
 }
 
 </style>
@@ -385,29 +457,38 @@ button.active {
 
 <div class="dock">
 
-    <div class="header">
 
-        <div>
+    <!-- ======================================================
+         HEADER
+         ====================================================== -->
+
+    <div class="topbar">
+
+        <div class="identity">
 
             <div class="title">
                 TikTok LIVE
             </div>
 
-            <div class="username">
-                @alexceeded
+            <div
+                class="username-display"
+                id="usernameDisplay"
+            >
+                @—
             </div>
 
         </div>
+
 
         <div class="status">
 
             <div
                 id="statusDot"
-                class="status-dot test"
+                class="status-dot"
             ></div>
 
             <span id="statusText">
-                TEST MODE
+                LIVE DISCONNECTED
             </span>
 
         </div>
@@ -415,122 +496,97 @@ button.active {
     </div>
 
 
-    <div class="controls">
-
-        <button
-            id="testButton"
-            class="active"
-            onclick="setMode('test')"
-        >
-            TEST MODE
-        </button>
-
-        <button
-            id="streamButton"
-            onclick="prepareStream()"
-        >
-            STREAM MODE
-        </button>
-
-    </div>
-
-
-    <button
-        id="confirmButton"
-        class="confirm"
-        onclick="confirmLive()"
-        style="display:none;"
-    >
-        ✓ CONFIRM LIVE
-    </button>
-
-
-    <div
-        id="errorBox"
-        class="error"
-        style="display:none;"
-    ></div>
-
+    <!-- ======================================================
+         STATS
+         ====================================================== -->
 
     <div class="stats">
 
+
         <div class="stat">
-            <div class="stat-label">
-                VIEWERS
+
+            <div class="stat-icon">
+                👁️
             </div>
 
             <div
                 class="stat-value"
                 id="viewers"
             >
-                127
+                0
             </div>
+
+            <div class="stat-sub">
+                VIEWERS
+            </div>
+
         </div>
 
 
         <div class="stat">
-            <div class="stat-label">
-                LIKES
+
+            <div class="stat-icon">
+                ❤️
             </div>
 
             <div
                 class="stat-value"
                 id="likes"
             >
-                4,821
+                0
             </div>
+
+            <div class="stat-sub">
+                LIKES
+            </div>
+
         </div>
 
 
         <div class="stat">
-            <div class="stat-label">
-                FOLLOWERS
+
+            <div class="stat-icon">
+                👤
             </div>
 
             <div
                 class="stat-value"
-                id="totalFollowers"
+                id="followers"
             >
-                1,247
+                —
             </div>
+
+            <div class="stat-sub">
+                FOLLOWERS
+            </div>
+
         </div>
 
 
         <div class="stat">
-            <div class="stat-label">
-                NEW LIVE
+
+            <div class="stat-icon">
+                ➕
             </div>
 
             <div
                 class="stat-value"
                 id="newFollowers"
             >
-                32
-            </div>
-        </div>
-
-
-        <div class="stat">
-            <div class="stat-label">
-                GIFTS
-            </div>
-
-            <div
-                class="stat-value"
-                id="gifts"
-            >
                 0
             </div>
 
             <div class="stat-sub">
-                items
+                NEW THIS LIVE
             </div>
+
         </div>
 
 
         <div class="stat">
-            <div class="stat-label">
-                DIAMONDS
+
+            <div class="stat-icon">
+                💎
             </div>
 
             <div
@@ -541,66 +597,73 @@ button.active {
             </div>
 
             <div class="stat-sub">
-                estimated
+                DIAMONDS
             </div>
+
         </div>
 
 
         <div class="stat">
-            <div class="stat-label">
-                EARNINGS
+
+            <div class="stat-icon">
+                💵
             </div>
 
             <div
                 class="stat-value"
-                id="estimatedUsd"
+                id="usd"
             >
                 $0.00
             </div>
 
             <div class="stat-sub">
-                estimated
+                EST. USD
             </div>
+
         </div>
 
     </div>
 
 
-    <div class="feed-title">
+    <!-- ======================================================
+         USERNAME
+         ====================================================== -->
 
-        <span>
-            ACTIONS
-        </span>
+    <div class="username-section">
 
-        <span>
-            LIVE EVENTS
-        </span>
+        <input
+            id="usernameInput"
+            class="username-input"
+            type="text"
+            placeholder="TikTok username..."
+            autocomplete="off"
+            spellcheck="false"
+        >
+
+        <button
+            id="connectButton"
+            class="connect-button"
+        >
+            SAVE & CONNECT
+        </button>
 
     </div>
 
 
     <div
-        id="feed"
-        class="feed"
-    >
-
-        <div class="empty">
-            Waiting for events...
-        </div>
-
-    </div>
+        id="errorBox"
+        class="error"
+        style="display:none;"
+    ></div>
 
 </div>
 
 
 <script>
 
-let socket = null;
-
-let pendingStreamConfirmation = false;
-
-
-/* ELEMENTS */
+/* ============================================================
+   ELEMENTS
+   ============================================================ */
 
 const viewers =
     document.getElementById("viewers");
@@ -608,23 +671,26 @@ const viewers =
 const likes =
     document.getElementById("likes");
 
-const totalFollowers =
-    document.getElementById("totalFollowers");
+const followers =
+    document.getElementById("followers");
 
 const newFollowers =
     document.getElementById("newFollowers");
 
-const gifts =
-    document.getElementById("gifts");
-
 const diamonds =
     document.getElementById("diamonds");
 
-const estimatedUsd =
-    document.getElementById("estimatedUsd");
+const usd =
+    document.getElementById("usd");
 
-const feed =
-    document.getElementById("feed");
+const usernameInput =
+    document.getElementById("usernameInput");
+
+const usernameDisplay =
+    document.getElementById("usernameDisplay");
+
+const connectButton =
+    document.getElementById("connectButton");
 
 const statusDot =
     document.getElementById("statusDot");
@@ -632,20 +698,16 @@ const statusDot =
 const statusText =
     document.getElementById("statusText");
 
-const testButton =
-    document.getElementById("testButton");
-
-const streamButton =
-    document.getElementById("streamButton");
-
-const confirmButton =
-    document.getElementById("confirmButton");
-
 const errorBox =
     document.getElementById("errorBox");
 
 
-/* WEBSOCKET */
+/* ============================================================
+   WEBSOCKET
+   ============================================================ */
+
+let socket = null;
+
 
 function connectWebSocket() {
 
@@ -654,14 +716,18 @@ function connectWebSocket() {
             "ws://localhost:3001"
         );
 
+
     socket.addEventListener(
         "open",
         () => {
+
             console.log(
-                "Dock server connected."
+                "[DOCK] Connected to server."
             );
+
         }
     );
+
 
     socket.addEventListener(
         "message",
@@ -674,18 +740,21 @@ function connectWebSocket() {
                         event.data
                     );
 
+
                 handleEvent(data);
 
             } catch (error) {
 
                 console.error(
-                    "Invalid server message:",
+                    "[DOCK] Invalid message:",
                     error
                 );
 
             }
+
         }
     );
+
 
     socket.addEventListener(
         "close",
@@ -698,162 +767,128 @@ function connectWebSocket() {
 
         }
     );
+
 }
 
 
-/* EVENT HANDLER */
+/* ============================================================
+   EVENT HANDLER
+   ============================================================ */
 
 function handleEvent(data) {
 
-    if (data.type === "status") {
+
+    if (
+        data.type === "status"
+    ) {
 
         updateStatus(
-            data.mode,
             data.connected,
             data.connecting
         );
 
-        if (data.error) {
-            showError(data.error);
+
+        if (
+            data.username
+        ) {
+
+            usernameDisplay.textContent =
+                `@${data.username}`;
+
+            usernameInput.value =
+                data.username;
+
         }
 
+
+        if (
+            data.error
+        ) {
+
+            showError(
+                data.error
+            );
+
+        }
+
+
         return;
+
     }
 
 
-    if (data.type === "stats") {
+    if (
+        data.type === "stats"
+    ) {
 
         updateStats(data);
 
         return;
+
     }
 
 
-    if (data.type === "viewers") {
+    if (
+        data.type === "viewers"
+    ) {
 
         viewers.textContent =
-            formatNumber(data.total);
+            formatNumber(
+                data.total
+            );
 
         return;
+
     }
 
 
-    if (data.type === "likes") {
+    if (
+        data.type === "likes"
+    ) {
 
         likes.textContent =
-            formatNumber(data.total);
+            formatNumber(
+                data.total
+            );
 
         return;
+
     }
 
 
-    if (data.type === "chat") {
+    if (
+        data.type === "usernameSaved"
+    ) {
 
-        addEvent(
-            "💬",
-            data.user,
-            data.text
-        );
+        usernameDisplay.textContent =
+            `@${data.username}`;
+
+        usernameInput.value =
+            data.username;
+
+        clearError();
 
         return;
+
     }
 
 
-    if (data.type === "gift") {
+    if (
+        data.type === "error"
+    ) {
 
-        const quantity =
-            data.countedAmount > 0
-                ? data.countedAmount
-                : data.repeatCount;
-
-        let description =
-            `${data.giftName} ×${quantity}`;
-
-        let value = "";
-
-        if (
-            data.isStreakable &&
-            !data.repeatEnd
-        ) {
-
-            value =
-                "streak...";
-
-        } else {
-
-            value =
-                `${formatNumber(data.diamonds)} 💎`;
-
-            if (
-                Number(data.estimatedUsd) > 0
-            ) {
-                value +=
-                    ` · $${Number(
-                        data.estimatedUsd
-                    ).toFixed(2)}`;
-            }
-        }
-
-        addEvent(
-            "🎁",
-            data.user,
-            description,
-            value
-        );
-
-        return;
-    }
-
-
-    if (data.type === "follow") {
-
-        addEvent(
-            "➕",
-            data.user,
-            "followed you"
-        );
-
-        return;
-    }
-
-
-    if (data.type === "join") {
-
-        addEvent(
-            "👋",
-            data.user,
-            "joined the LIVE"
-        );
-
-        return;
-    }
-
-
-    if (data.type === "fanclub") {
-
-        addEvent(
-            "⭐",
-            data.user,
-            "joined the Fan Club"
-        );
-
-        return;
-    }
-
-
-    if (data.type === "debug") {
-
-        console.log(
-            `[DEBUG/${data.level}]`,
+        showError(
             data.message
         );
 
-        return;
     }
+
 }
 
 
-/* STATS */
+/* ============================================================
+   STATS
+   ============================================================ */
 
 function updateStats(data) {
 
@@ -862,81 +897,54 @@ function updateStats(data) {
             data.viewers
         );
 
+
     likes.textContent =
         formatNumber(
             data.likes
         );
 
-    totalFollowers.textContent =
-        data.totalFollowers === null
+
+    followers.textContent =
+        data.totalFollowers === null ||
+        data.totalFollowers === undefined
             ? "—"
             : formatNumber(
                 data.totalFollowers
             );
+
 
     newFollowers.textContent =
         formatNumber(
             data.newFollowers
         );
 
-    gifts.textContent =
-        formatNumber(
-            data.gifts
-        );
 
     diamonds.textContent =
         formatNumber(
             data.diamonds
         );
 
-    estimatedUsd.textContent =
+
+    usd.textContent =
         `$${Number(
-            data.estimatedUsd || 0
+            data.estimatedUsd ?? 0
         ).toFixed(2)}`;
+
 }
 
 
-/* STATUS */
+/* ============================================================
+   STATUS
+   ============================================================ */
 
 function updateStatus(
-    mode,
     connected,
     connecting
 ) {
 
-    if (mode === "test") {
-
-        statusText.textContent =
-            "TEST MODE";
-
-        statusDot.className =
-            "status-dot test";
-
-        testButton.classList.add(
-            "active"
-        );
-
-        streamButton.classList.remove(
-            "active"
-        );
-
-        confirmButton.style.display =
-            "none";
-
-        return;
-    }
-
-
-    testButton.classList.remove(
-        "active"
-    );
-
-    streamButton.classList.add(
-        "active"
-    );
-
-
-    if (connected) {
+    if (
+        connected
+    ) {
 
         statusText.textContent =
             "LIVE CONNECTED";
@@ -944,10 +952,14 @@ function updateStatus(
         statusDot.className =
             "status-dot online";
 
-        confirmButton.style.display =
-            "none";
+        return;
 
-    } else if (connecting) {
+    }
+
+
+    if (
+        connecting
+    ) {
 
         statusText.textContent =
             "CONNECTING...";
@@ -955,24 +967,25 @@ function updateStatus(
         statusDot.className =
             "status-dot connecting";
 
-        confirmButton.style.display =
-            "none";
-
-    } else {
-
-        statusText.textContent =
-            "OFFLINE";
-
-        statusDot.className =
-            "status-dot";
+        return;
 
     }
+
+
+    statusText.textContent =
+        "LIVE DISCONNECTED";
+
+    statusDot.className =
+        "status-dot";
+
 }
 
 
-/* MODE */
+/* ============================================================
+   USERNAME
+   ============================================================ */
 
-function prepareStream() {
+function saveUsername() {
 
     if (
         !socket ||
@@ -981,209 +994,101 @@ function prepareStream() {
     ) {
 
         showError(
-            "Dock server is not connected."
+            "Dashboard server is not connected."
         );
 
         return;
+
     }
 
-    pendingStreamConfirmation =
-        true;
 
-    confirmButton.style.display =
-        "block";
-
-    statusText.textContent =
-        "READY TO CONNECT";
-
-    statusDot.className =
-        "status-dot connecting";
-}
+    let value =
+        usernameInput.value
+            .trim()
+            .replace(/^@/, "");
 
 
-function confirmLive() {
+    if (
+        !value
+    ) {
 
-    if (!pendingStreamConfirmation) {
+        showError(
+            "Enter a TikTok username."
+        );
+
         return;
+
     }
 
-    pendingStreamConfirmation =
-        false;
-
-    confirmButton.style.display =
-        "none";
 
     clearError();
-    clearFeed();
+
+
+    connectButton.disabled =
+        true;
+
+    connectButton.textContent =
+        "CONNECTING...";
+
 
     socket.send(
         JSON.stringify({
-            type: "setMode",
-            mode: "stream"
+
+            type: "setUsername",
+
+            username:
+                value
+
         })
     );
+
+
+    setTimeout(
+        () => {
+
+            connectButton.disabled =
+                false;
+
+            connectButton.textContent =
+                "SAVE & CONNECT";
+
+        },
+        1500
+    );
+
 }
 
 
-function setMode(mode) {
-
-    if (mode !== "test") {
-        return;
-    }
-
-    pendingStreamConfirmation =
-        false;
-
-    confirmButton.style.display =
-        "none";
-
-    clearError();
-    clearFeed();
-
-    if (
-        socket &&
-        socket.readyState ===
-        WebSocket.OPEN
-    ) {
-
-        socket.send(
-            JSON.stringify({
-                type: "setMode",
-                mode: "test"
-            })
-        );
-    }
-}
+connectButton.addEventListener(
+    "click",
+    saveUsername
+);
 
 
-/* FEED */
+usernameInput.addEventListener(
+    "keydown",
+    event => {
 
-function addEvent(
-    icon,
-    user,
-    message,
-    value = ""
-) {
+        if (
+            event.key === "Enter"
+        ) {
 
-    const empty =
-        feed.querySelector(
-            ".empty"
-        );
+            saveUsername();
 
-    if (empty) {
-        empty.remove();
-    }
-
-
-    const event =
-        document.createElement(
-            "div"
-        );
-
-    event.className =
-        "event";
-
-
-    const iconElement =
-        document.createElement(
-            "div"
-        );
-
-    iconElement.className =
-        "icon";
-
-    iconElement.textContent =
-        icon;
-
-
-    const main =
-        document.createElement(
-            "div"
-        );
-
-    main.className =
-        "event-main";
-
-
-    const userElement =
-        document.createElement(
-            "div"
-        );
-
-    userElement.className =
-        "event-user";
-
-    userElement.textContent =
-        user;
-
-
-    const messageElement =
-        document.createElement(
-            "div"
-        );
-
-    messageElement.className =
-        "event-text";
-
-    messageElement.textContent =
-        message;
-
-
-    main.appendChild(
-        userElement
-    );
-
-    main.appendChild(
-        messageElement
-    );
-
-
-    const valueElement =
-        document.createElement(
-            "div"
-        );
-
-    valueElement.className =
-        "event-value";
-
-    valueElement.textContent =
-        value;
-
-
-    event.appendChild(
-        iconElement
-    );
-
-    event.appendChild(
-        main
-    );
-
-    event.appendChild(
-        valueElement
-    );
-
-
-    feed.prepend(
-        event
-    );
-
-
-    while (
-        feed.children.length > 35
-    ) {
-
-        feed.lastElementChild.remove();
+        }
 
     }
-}
+);
 
 
-/* UTILITIES */
+/* ============================================================
+   UTILITIES
+   ============================================================ */
 
 function formatNumber(number) {
 
     return Number(
-        number || 0
+        number ?? 0
     ).toLocaleString();
 
 }
@@ -1196,6 +1101,7 @@ function showError(message) {
 
     errorBox.style.display =
         "block";
+
 }
 
 
@@ -1203,23 +1109,18 @@ function clearError() {
 
     errorBox.style.display =
         "none";
+
 }
 
 
-function clearFeed() {
-
-    feed.innerHTML =
-        `<div class="empty">
-            Waiting for events...
-        </div>`;
-}
-
-
-/* START */
+/* ============================================================
+   START
+   ============================================================ */
 
 connectWebSocket();
 
 </script>
 
 </body>
+
 </html>

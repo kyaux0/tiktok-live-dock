@@ -1,0 +1,1225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+<meta charset="UTF-8">
+
+<meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+>
+
+<title>TikTok LIVE Dock</title>
+
+<style>
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    padding: 12px;
+
+    background-color: #000;
+
+    color: #fff;
+
+    font-family:
+        Inter,
+        Arial,
+        Helvetica,
+        sans-serif;
+
+    overflow: hidden;
+}
+
+.dock {
+    width: 100%;
+    max-width: 600px;
+
+    margin: auto;
+
+    background:
+        rgba(14, 14, 18, 0.97);
+
+    border:
+        1px solid
+        rgba(255,255,255,0.10);
+
+    border-radius: 13px;
+
+    padding: 14px;
+
+    box-shadow:
+        0 10px 30px
+        rgba(0,0,0,0.35);
+}
+
+/* HEADER */
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    margin-bottom: 12px;
+}
+
+.title {
+    font-size: 18px;
+    font-weight: 800;
+}
+
+.username {
+    margin-top: 2px;
+
+    color: #888;
+
+    font-size: 11px;
+}
+
+.status {
+    display: flex;
+    align-items: center;
+
+    gap: 6px;
+
+    font-size: 10px;
+    font-weight: 700;
+
+    color: #999;
+}
+
+.status-dot {
+    width: 8px;
+    height: 8px;
+
+    border-radius: 50%;
+
+    background: #777;
+}
+
+.status-dot.test {
+    background: #f59e0b;
+}
+
+.status-dot.online {
+    background: #22c55e;
+}
+
+.status-dot.connecting {
+    background: #eab308;
+}
+
+/* CONTROLS */
+
+.controls {
+    display: grid;
+
+    grid-template-columns:
+        1fr 1fr;
+
+    gap: 7px;
+
+    margin-bottom: 7px;
+}
+
+button {
+    border: none;
+
+    border-radius: 8px;
+
+    padding: 8px;
+
+    background:
+        rgba(255,255,255,0.07);
+
+    color: #aaa;
+
+    font-size: 11px;
+    font-weight: 800;
+
+    cursor: pointer;
+}
+
+button:hover {
+    background:
+        rgba(255,255,255,0.12);
+}
+
+button.active {
+    background:
+        rgba(255,255,255,0.16);
+
+    color: #fff;
+}
+
+.confirm {
+    width: 100%;
+
+    margin-bottom: 12px;
+
+    background:
+        rgba(34,197,94,0.16);
+
+    color: #6ee7a0;
+}
+
+/* ERROR */
+
+.error {
+    margin-bottom: 8px;
+
+    padding: 7px 9px;
+
+    border-radius: 7px;
+
+    background:
+        rgba(239,68,68,0.10);
+
+    color: #f87171;
+
+    font-size: 9px;
+}
+
+/* STATS */
+
+.stats {
+    display: grid;
+
+    grid-template-columns:
+        repeat(4, 1fr);
+
+    gap: 6px;
+
+    margin-bottom: 12px;
+}
+
+.stat {
+    min-width: 0;
+
+    padding: 8px;
+
+    border-radius: 8px;
+
+    background:
+        rgba(255,255,255,0.045);
+}
+
+.stat-label {
+    font-size: 8px;
+
+    color: #777;
+
+    font-weight: 700;
+
+    margin-bottom: 3px;
+
+    white-space: nowrap;
+}
+
+.stat-value {
+    font-size: 15px;
+
+    font-weight: 800;
+
+    white-space: nowrap;
+
+    overflow: hidden;
+
+    text-overflow: ellipsis;
+}
+
+.stat-sub {
+    margin-top: 1px;
+
+    font-size: 8px;
+
+    color: #777;
+}
+
+/* FEED */
+
+.feed-title {
+    display: flex;
+
+    justify-content:
+        space-between;
+
+    align-items: center;
+
+    margin-bottom: 6px;
+}
+
+.feed-title span:first-child {
+    font-size: 10px;
+
+    font-weight: 800;
+
+    color: #aaa;
+
+    letter-spacing: 0.4px;
+}
+
+.feed-title span:last-child {
+    font-size: 8px;
+
+    color: #555;
+}
+
+.feed {
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 5px;
+
+    max-height: 310px;
+
+    overflow-y: auto;
+}
+
+.feed::-webkit-scrollbar {
+    width: 4px;
+}
+
+.feed::-webkit-scrollbar-thumb {
+    background: #333;
+
+    border-radius: 10px;
+}
+
+.event {
+    display: grid;
+
+    grid-template-columns:
+        25px 1fr auto;
+
+    align-items: center;
+
+    gap: 7px;
+
+    padding: 7px 8px;
+
+    border-radius: 7px;
+
+    background:
+        rgba(255,255,255,0.045);
+}
+
+.icon {
+    width: 25px;
+    height: 25px;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 6px;
+
+    background:
+        rgba(255,255,255,0.07);
+
+    font-size: 12px;
+}
+
+.event-main {
+    min-width: 0;
+}
+
+.event-user {
+    font-size: 11px;
+
+    font-weight: 800;
+
+    white-space: nowrap;
+
+    overflow: hidden;
+
+    text-overflow: ellipsis;
+}
+
+.event-text {
+    margin-top: 1px;
+
+    font-size: 10px;
+
+    color: #999;
+
+    white-space: nowrap;
+
+    overflow: hidden;
+
+    text-overflow: ellipsis;
+}
+
+.event-value {
+    font-size: 9px;
+
+    font-weight: 800;
+
+    color: #aaa;
+
+    white-space: nowrap;
+
+    text-align: right;
+}
+
+.empty {
+    padding: 22px;
+
+    text-align: center;
+
+    color: #555;
+
+    font-size: 10px;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="dock">
+
+    <div class="header">
+
+        <div>
+
+            <div class="title">
+                TikTok LIVE
+            </div>
+
+            <div class="username">
+                @alexceeded
+            </div>
+
+        </div>
+
+        <div class="status">
+
+            <div
+                id="statusDot"
+                class="status-dot test"
+            ></div>
+
+            <span id="statusText">
+                TEST MODE
+            </span>
+
+        </div>
+
+    </div>
+
+
+    <div class="controls">
+
+        <button
+            id="testButton"
+            class="active"
+            onclick="setMode('test')"
+        >
+            TEST MODE
+        </button>
+
+        <button
+            id="streamButton"
+            onclick="prepareStream()"
+        >
+            STREAM MODE
+        </button>
+
+    </div>
+
+
+    <button
+        id="confirmButton"
+        class="confirm"
+        onclick="confirmLive()"
+        style="display:none;"
+    >
+        ✓ CONFIRM LIVE
+    </button>
+
+
+    <div
+        id="errorBox"
+        class="error"
+        style="display:none;"
+    ></div>
+
+
+    <div class="stats">
+
+        <div class="stat">
+            <div class="stat-label">
+                VIEWERS
+            </div>
+
+            <div
+                class="stat-value"
+                id="viewers"
+            >
+                127
+            </div>
+        </div>
+
+
+        <div class="stat">
+            <div class="stat-label">
+                LIKES
+            </div>
+
+            <div
+                class="stat-value"
+                id="likes"
+            >
+                4,821
+            </div>
+        </div>
+
+
+        <div class="stat">
+            <div class="stat-label">
+                FOLLOWERS
+            </div>
+
+            <div
+                class="stat-value"
+                id="totalFollowers"
+            >
+                1,247
+            </div>
+        </div>
+
+
+        <div class="stat">
+            <div class="stat-label">
+                NEW LIVE
+            </div>
+
+            <div
+                class="stat-value"
+                id="newFollowers"
+            >
+                32
+            </div>
+        </div>
+
+
+        <div class="stat">
+            <div class="stat-label">
+                GIFTS
+            </div>
+
+            <div
+                class="stat-value"
+                id="gifts"
+            >
+                0
+            </div>
+
+            <div class="stat-sub">
+                items
+            </div>
+        </div>
+
+
+        <div class="stat">
+            <div class="stat-label">
+                DIAMONDS
+            </div>
+
+            <div
+                class="stat-value"
+                id="diamonds"
+            >
+                0
+            </div>
+
+            <div class="stat-sub">
+                estimated
+            </div>
+        </div>
+
+
+        <div class="stat">
+            <div class="stat-label">
+                EARNINGS
+            </div>
+
+            <div
+                class="stat-value"
+                id="estimatedUsd"
+            >
+                $0.00
+            </div>
+
+            <div class="stat-sub">
+                estimated
+            </div>
+        </div>
+
+    </div>
+
+
+    <div class="feed-title">
+
+        <span>
+            ACTIONS
+        </span>
+
+        <span>
+            LIVE EVENTS
+        </span>
+
+    </div>
+
+
+    <div
+        id="feed"
+        class="feed"
+    >
+
+        <div class="empty">
+            Waiting for events...
+        </div>
+
+    </div>
+
+</div>
+
+
+<script>
+
+let socket = null;
+
+let pendingStreamConfirmation = false;
+
+
+/* ELEMENTS */
+
+const viewers =
+    document.getElementById("viewers");
+
+const likes =
+    document.getElementById("likes");
+
+const totalFollowers =
+    document.getElementById("totalFollowers");
+
+const newFollowers =
+    document.getElementById("newFollowers");
+
+const gifts =
+    document.getElementById("gifts");
+
+const diamonds =
+    document.getElementById("diamonds");
+
+const estimatedUsd =
+    document.getElementById("estimatedUsd");
+
+const feed =
+    document.getElementById("feed");
+
+const statusDot =
+    document.getElementById("statusDot");
+
+const statusText =
+    document.getElementById("statusText");
+
+const testButton =
+    document.getElementById("testButton");
+
+const streamButton =
+    document.getElementById("streamButton");
+
+const confirmButton =
+    document.getElementById("confirmButton");
+
+const errorBox =
+    document.getElementById("errorBox");
+
+
+/* WEBSOCKET */
+
+function connectWebSocket() {
+
+    socket =
+        new WebSocket(
+            "ws://localhost:3001"
+        );
+
+    socket.addEventListener(
+        "open",
+        () => {
+            console.log(
+                "Dock server connected."
+            );
+        }
+    );
+
+    socket.addEventListener(
+        "message",
+        event => {
+
+            try {
+
+                const data =
+                    JSON.parse(
+                        event.data
+                    );
+
+                handleEvent(data);
+
+            } catch (error) {
+
+                console.error(
+                    "Invalid server message:",
+                    error
+                );
+
+            }
+        }
+    );
+
+    socket.addEventListener(
+        "close",
+        () => {
+
+            setTimeout(
+                connectWebSocket,
+                2000
+            );
+
+        }
+    );
+}
+
+
+/* EVENT HANDLER */
+
+function handleEvent(data) {
+
+    if (data.type === "status") {
+
+        updateStatus(
+            data.mode,
+            data.connected,
+            data.connecting
+        );
+
+        if (data.error) {
+            showError(data.error);
+        }
+
+        return;
+    }
+
+
+    if (data.type === "stats") {
+
+        updateStats(data);
+
+        return;
+    }
+
+
+    if (data.type === "viewers") {
+
+        viewers.textContent =
+            formatNumber(data.total);
+
+        return;
+    }
+
+
+    if (data.type === "likes") {
+
+        likes.textContent =
+            formatNumber(data.total);
+
+        return;
+    }
+
+
+    if (data.type === "chat") {
+
+        addEvent(
+            "💬",
+            data.user,
+            data.text
+        );
+
+        return;
+    }
+
+
+    if (data.type === "gift") {
+
+        const quantity =
+            data.countedAmount > 0
+                ? data.countedAmount
+                : data.repeatCount;
+
+        let description =
+            `${data.giftName} ×${quantity}`;
+
+        let value = "";
+
+        if (
+            data.isStreakable &&
+            !data.repeatEnd
+        ) {
+
+            value =
+                "streak...";
+
+        } else {
+
+            value =
+                `${formatNumber(data.diamonds)} 💎`;
+
+            if (
+                Number(data.estimatedUsd) > 0
+            ) {
+                value +=
+                    ` · $${Number(
+                        data.estimatedUsd
+                    ).toFixed(2)}`;
+            }
+        }
+
+        addEvent(
+            "🎁",
+            data.user,
+            description,
+            value
+        );
+
+        return;
+    }
+
+
+    if (data.type === "follow") {
+
+        addEvent(
+            "➕",
+            data.user,
+            "followed you"
+        );
+
+        return;
+    }
+
+
+    if (data.type === "join") {
+
+        addEvent(
+            "👋",
+            data.user,
+            "joined the LIVE"
+        );
+
+        return;
+    }
+
+
+    if (data.type === "fanclub") {
+
+        addEvent(
+            "⭐",
+            data.user,
+            "joined the Fan Club"
+        );
+
+        return;
+    }
+
+
+    if (data.type === "debug") {
+
+        console.log(
+            `[DEBUG/${data.level}]`,
+            data.message
+        );
+
+        return;
+    }
+}
+
+
+/* STATS */
+
+function updateStats(data) {
+
+    viewers.textContent =
+        formatNumber(
+            data.viewers
+        );
+
+    likes.textContent =
+        formatNumber(
+            data.likes
+        );
+
+    totalFollowers.textContent =
+        data.totalFollowers === null
+            ? "—"
+            : formatNumber(
+                data.totalFollowers
+            );
+
+    newFollowers.textContent =
+        formatNumber(
+            data.newFollowers
+        );
+
+    gifts.textContent =
+        formatNumber(
+            data.gifts
+        );
+
+    diamonds.textContent =
+        formatNumber(
+            data.diamonds
+        );
+
+    estimatedUsd.textContent =
+        `$${Number(
+            data.estimatedUsd || 0
+        ).toFixed(2)}`;
+}
+
+
+/* STATUS */
+
+function updateStatus(
+    mode,
+    connected,
+    connecting
+) {
+
+    if (mode === "test") {
+
+        statusText.textContent =
+            "TEST MODE";
+
+        statusDot.className =
+            "status-dot test";
+
+        testButton.classList.add(
+            "active"
+        );
+
+        streamButton.classList.remove(
+            "active"
+        );
+
+        confirmButton.style.display =
+            "none";
+
+        return;
+    }
+
+
+    testButton.classList.remove(
+        "active"
+    );
+
+    streamButton.classList.add(
+        "active"
+    );
+
+
+    if (connected) {
+
+        statusText.textContent =
+            "LIVE CONNECTED";
+
+        statusDot.className =
+            "status-dot online";
+
+        confirmButton.style.display =
+            "none";
+
+    } else if (connecting) {
+
+        statusText.textContent =
+            "CONNECTING...";
+
+        statusDot.className =
+            "status-dot connecting";
+
+        confirmButton.style.display =
+            "none";
+
+    } else {
+
+        statusText.textContent =
+            "OFFLINE";
+
+        statusDot.className =
+            "status-dot";
+
+    }
+}
+
+
+/* MODE */
+
+function prepareStream() {
+
+    if (
+        !socket ||
+        socket.readyState !==
+        WebSocket.OPEN
+    ) {
+
+        showError(
+            "Dock server is not connected."
+        );
+
+        return;
+    }
+
+    pendingStreamConfirmation =
+        true;
+
+    confirmButton.style.display =
+        "block";
+
+    statusText.textContent =
+        "READY TO CONNECT";
+
+    statusDot.className =
+        "status-dot connecting";
+}
+
+
+function confirmLive() {
+
+    if (!pendingStreamConfirmation) {
+        return;
+    }
+
+    pendingStreamConfirmation =
+        false;
+
+    confirmButton.style.display =
+        "none";
+
+    clearError();
+    clearFeed();
+
+    socket.send(
+        JSON.stringify({
+            type: "setMode",
+            mode: "stream"
+        })
+    );
+}
+
+
+function setMode(mode) {
+
+    if (mode !== "test") {
+        return;
+    }
+
+    pendingStreamConfirmation =
+        false;
+
+    confirmButton.style.display =
+        "none";
+
+    clearError();
+    clearFeed();
+
+    if (
+        socket &&
+        socket.readyState ===
+        WebSocket.OPEN
+    ) {
+
+        socket.send(
+            JSON.stringify({
+                type: "setMode",
+                mode: "test"
+            })
+        );
+    }
+}
+
+
+/* FEED */
+
+function addEvent(
+    icon,
+    user,
+    message,
+    value = ""
+) {
+
+    const empty =
+        feed.querySelector(
+            ".empty"
+        );
+
+    if (empty) {
+        empty.remove();
+    }
+
+
+    const event =
+        document.createElement(
+            "div"
+        );
+
+    event.className =
+        "event";
+
+
+    const iconElement =
+        document.createElement(
+            "div"
+        );
+
+    iconElement.className =
+        "icon";
+
+    iconElement.textContent =
+        icon;
+
+
+    const main =
+        document.createElement(
+            "div"
+        );
+
+    main.className =
+        "event-main";
+
+
+    const userElement =
+        document.createElement(
+            "div"
+        );
+
+    userElement.className =
+        "event-user";
+
+    userElement.textContent =
+        user;
+
+
+    const messageElement =
+        document.createElement(
+            "div"
+        );
+
+    messageElement.className =
+        "event-text";
+
+    messageElement.textContent =
+        message;
+
+
+    main.appendChild(
+        userElement
+    );
+
+    main.appendChild(
+        messageElement
+    );
+
+
+    const valueElement =
+        document.createElement(
+            "div"
+        );
+
+    valueElement.className =
+        "event-value";
+
+    valueElement.textContent =
+        value;
+
+
+    event.appendChild(
+        iconElement
+    );
+
+    event.appendChild(
+        main
+    );
+
+    event.appendChild(
+        valueElement
+    );
+
+
+    feed.prepend(
+        event
+    );
+
+
+    while (
+        feed.children.length > 35
+    ) {
+
+        feed.lastElementChild.remove();
+
+    }
+}
+
+
+/* UTILITIES */
+
+function formatNumber(number) {
+
+    return Number(
+        number || 0
+    ).toLocaleString();
+
+}
+
+
+function showError(message) {
+
+    errorBox.textContent =
+        message;
+
+    errorBox.style.display =
+        "block";
+}
+
+
+function clearError() {
+
+    errorBox.style.display =
+        "none";
+}
+
+
+function clearFeed() {
+
+    feed.innerHTML =
+        `<div class="empty">
+            Waiting for events...
+        </div>`;
+}
+
+
+/* START */
+
+connectWebSocket();
+
+</script>
+
+</body>
+</html>

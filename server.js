@@ -19,12 +19,52 @@ const WS_PORT = 3001;
 const CONFIG_FILE =
     path.join(process.cwd(), "dock-config.json");
 
+const SOUND_CONFIG_FILE =
+    path.join(process.cwd(), "sound-config.json");
+
+const SOUNDS_DIR =
+    path.join(process.cwd(), "sounds");
+
+const CUSTOM_SOUNDS_DIR =
+    path.join(SOUNDS_DIR, "custom");
+
+
 /*
- * Approximate creator payout value per diamond.
+ * Approximate creator payout value per coin.
  *
- * This is an estimate, not an official fixed TikTok exchange rate.
+ * TikTok's actual creator payout can vary, so this is
+ * an estimate rather than an official fixed exchange rate.
  */
-const DIAMOND_USD_VALUE = 0.005;
+const COIN_USD_VALUE = 0.005;
+
+
+/* ============================================================
+   DIRECTORIES
+   ============================================================ */
+
+function ensureDirectories() {
+
+    try {
+
+        fs.mkdirSync(
+            CUSTOM_SOUNDS_DIR,
+            {
+                recursive: true
+            }
+        );
+
+    } catch (error) {
+
+        console.error(
+            "[SOUNDS] Could not create sound directory:",
+            error
+        );
+
+    }
+
+}
+
+ensureDirectories();
 
 
 /* ============================================================
@@ -112,6 +152,235 @@ let USERNAME =
 
 
 /* ============================================================
+   SOUND CONFIG
+   ============================================================ */
+
+const DEFAULT_SOUND_CONFIG = {
+
+    globalEnabled: false,
+
+    follow: {
+        enabled: false,
+        volume: 1,
+        file: null
+    },
+
+    gift: {
+        enabled: false,
+        volume: 1,
+        file: null
+    },
+
+    likes500: {
+        enabled: false,
+        volume: 1,
+        file: null
+    }
+
+};
+
+
+function loadSoundConfig() {
+
+    try {
+
+        if (
+            fs.existsSync(
+                SOUND_CONFIG_FILE
+            )
+        ) {
+
+            const raw =
+                fs.readFileSync(
+                    SOUND_CONFIG_FILE,
+                    "utf8"
+                );
+
+            const saved =
+                JSON.parse(raw);
+
+
+            return {
+
+                globalEnabled:
+                    saved.globalEnabled === true,
+
+                follow: {
+
+                    enabled:
+                        saved.follow?.enabled === true,
+
+                    volume:
+                        clampVolume(
+                            saved.follow?.volume
+                        ),
+
+                    file:
+                        normalizeSoundPath(
+                            saved.follow?.file
+                        )
+
+                },
+
+                gift: {
+
+                    enabled:
+                        saved.gift?.enabled === true,
+
+                    volume:
+                        clampVolume(
+                            saved.gift?.volume
+                        ),
+
+                    file:
+                        normalizeSoundPath(
+                            saved.gift?.file
+                        )
+
+                },
+
+                likes500: {
+
+                    enabled:
+                        saved.likes500?.enabled === true,
+
+                    volume:
+                        clampVolume(
+                            saved.likes500?.volume
+                        ),
+
+                    file:
+                        normalizeSoundPath(
+                            saved.likes500?.file
+                        )
+
+                }
+
+            };
+
+        }
+
+    } catch (error) {
+
+        console.error(
+            "[SOUNDS] Could not load sound config:",
+            error
+        );
+
+    }
+
+
+    return structuredClone(
+        DEFAULT_SOUND_CONFIG
+    );
+
+}
+
+
+function saveSoundConfig() {
+
+    try {
+
+        fs.writeFileSync(
+            SOUND_CONFIG_FILE,
+            JSON.stringify(
+                soundConfig,
+                null,
+                4
+            ),
+            "utf8"
+        );
+
+    } catch (error) {
+
+        console.error(
+            "[SOUNDS] Could not save sound config:",
+            error
+        );
+
+    }
+
+}
+
+
+function clampVolume(value) {
+
+    const number =
+        Number(value);
+
+
+    if (
+        !Number.isFinite(number)
+    ) {
+
+        return 1;
+
+    }
+
+
+    return Math.min(
+        1,
+        Math.max(
+            0,
+            number
+        )
+    );
+
+}
+
+
+function normalizeSoundPath(value) {
+
+    if (
+        typeof value !== "string" ||
+        !value.trim()
+    ) {
+
+        return null;
+
+    }
+
+
+    const normalized =
+        value.trim();
+
+
+    /*
+     * Only allow our own sound directory.
+     * This prevents arbitrary filesystem paths
+     * from being stored in the configuration.
+     */
+
+    if (
+        !normalized.startsWith(
+            "/sounds/"
+        )
+    ) {
+
+        return null;
+
+    }
+
+
+    if (
+        normalized.includes("..")
+    ) {
+
+        return null;
+
+    }
+
+
+    return normalized;
+
+}
+
+
+let soundConfig =
+    loadSoundConfig();
+
+
+/* ============================================================
    EXPRESS
    ============================================================ */
 
@@ -120,9 +389,315 @@ const app =
 
 
 app.use(
+    express.json({
+        limit: "25mb"
+    })
+);
+
+
+app.use(
     express.static("public")
 );
 
+
+app.use(
+    "/sounds",
+    express.static(
+        SOUNDS_DIR
+    )
+);
+
+
+/* ============================================================
+   SOUND API
+   ============================================================ */
+
+app.get(
+    "/api/sound-settings",
+    (req, res) => {
+
+        res.json(
+            soundConfig
+        );
+
+    }
+);
+
+
+app.post(
+    "/api/sound-settings",
+    (req, res) => {
+
+        try {
+
+            const incoming =
+                req.body ?? {};
+
+
+            soundConfig = {
+
+                globalEnabled:
+                    incoming.globalEnabled === true,
+
+                follow: {
+
+                    enabled:
+                        incoming.follow?.enabled === true,
+
+                    volume:
+                        clampVolume(
+                            incoming.follow?.volume
+                        ),
+
+                    file:
+                        normalizeSoundPath(
+                            incoming.follow?.file
+                        )
+
+                },
+
+                gift: {
+
+                    enabled:
+                        incoming.gift?.enabled === true,
+
+                    volume:
+                        clampVolume(
+                            incoming.gift?.volume
+                        ),
+
+                    file:
+                        normalizeSoundPath(
+                            incoming.gift?.file
+                        )
+
+                },
+
+                likes500: {
+
+                    enabled:
+                        incoming.likes500?.enabled === true,
+
+                    volume:
+                        clampVolume(
+                            incoming.likes500?.volume
+                        ),
+
+                    file:
+                        normalizeSoundPath(
+                            incoming.likes500?.file
+                        )
+
+                }
+
+            };
+
+
+            saveSoundConfig();
+
+
+            res.json({
+                success: true,
+                settings: soundConfig
+            });
+
+        } catch (error) {
+
+            console.error(
+                "[SOUNDS] Could not save settings:",
+                error
+            );
+
+
+            res.status(500).json({
+                success: false,
+                error: "Could not save sound settings."
+            });
+
+        }
+
+    }
+);
+
+
+/* ============================================================
+   SOUND UPLOAD
+   ============================================================ */
+
+app.post(
+    "/api/upload-sound",
+    (req, res) => {
+
+        try {
+
+            const {
+                filename,
+                data
+            } = req.body ?? {};
+
+
+            if (
+                typeof filename !== "string" ||
+                typeof data !== "string"
+            ) {
+
+                return res.status(400).json({
+                    success: false,
+                    error: "Invalid upload."
+                });
+
+            }
+
+
+            const extension =
+                path.extname(
+                    filename
+                ).toLowerCase();
+
+
+            const allowedExtensions =
+                [
+                    ".mp3",
+                    ".wav",
+                    ".ogg",
+                    ".m4a",
+                    ".aac"
+                ];
+
+
+            if (
+                !allowedExtensions.includes(
+                    extension
+                )
+            ) {
+
+                return res.status(400).json({
+                    success: false,
+                    error:
+                        "Unsupported audio format."
+                });
+
+            }
+
+
+            /*
+             * Sanitize the filename.
+             */
+
+            const baseName =
+                path.basename(
+                    filename,
+                    extension
+                )
+                .replace(
+                    /[^a-zA-Z0-9_-]/g,
+                    "_"
+                )
+                .slice(
+                    0,
+                    80
+                );
+
+
+            if (
+                !baseName
+            ) {
+
+                return res.status(400).json({
+                    success: false,
+                    error:
+                        "Invalid filename."
+                });
+
+            }
+
+
+            const finalFilename =
+                `${Date.now()}-${baseName}${extension}`;
+
+
+            const filePath =
+                path.join(
+                    CUSTOM_SOUNDS_DIR,
+                    finalFilename
+                );
+
+
+            const buffer =
+                Buffer.from(
+                    data,
+                    "base64"
+                );
+
+
+            /*
+             * 15 MB maximum audio file.
+             */
+
+            if (
+                buffer.length >
+                15 * 1024 * 1024
+            ) {
+
+                return res.status(400).json({
+                    success: false,
+                    error:
+                        "Audio file is too large. Maximum size is 15 MB."
+                });
+
+            }
+
+
+            fs.writeFileSync(
+                filePath,
+                buffer
+            );
+
+
+            const publicPath =
+                `/sounds/custom/${finalFilename}`;
+
+
+            console.log(
+                `[SOUNDS] Uploaded: ${finalFilename}`
+            );
+
+
+            res.json({
+
+                success: true,
+
+                file:
+                    publicPath,
+
+                filename:
+                    finalFilename
+
+            });
+
+        } catch (error) {
+
+            console.error(
+                "[SOUNDS] Upload failed:",
+                error
+            );
+
+
+            res.status(500).json({
+                success: false,
+                error:
+                    "Could not upload audio file."
+            });
+
+        }
+
+    }
+);
+
+
+/* ============================================================
+   START HTTP SERVER
+   ============================================================ */
 
 app.listen(
     PORT,
@@ -185,7 +760,7 @@ const liveState = {
 
     gifts: 0,
 
-    diamonds: 0,
+    coins: 0,
 
     estimatedUsd: 0,
 
@@ -276,7 +851,7 @@ function resetLiveState() {
 
     liveState.gifts = 0;
 
-    liveState.diamonds = 0;
+    liveState.coins = 0;
 
     liveState.estimatedUsd = 0;
 
@@ -334,10 +909,6 @@ wss.on(
                             raw.toString()
                         );
 
-
-                    /* ----------------------------------------
-                       CHANGE USERNAME
-                       ---------------------------------------- */
 
                     if (
                         data.type === "setUsername"
@@ -411,10 +982,6 @@ wss.on(
 
                     }
 
-
-                    /* ----------------------------------------
-                       MANUAL RECONNECT
-                       ---------------------------------------- */
 
                     if (
                         data.type === "reconnect"
@@ -690,11 +1257,7 @@ async function refreshRoomStats() {
             roomInfo
         );
 
-    } catch {
-        /*
-         * The next refresh will retry.
-         */
-    }
+    } catch {}
 
 }
 
@@ -784,9 +1347,14 @@ function createConnection() {
 
 
             broadcastStatus({
+
                 connected: true,
+
                 connecting: false,
-                roomId: state.roomId
+
+                roomId:
+                    state.roomId
+
             });
 
 
@@ -820,7 +1388,6 @@ function createConnection() {
         ({ code, reason }) => {
 
             stopRoomStatsRefresh();
-
 
             connecting = false;
 
@@ -982,7 +1549,7 @@ function createConnection() {
                 );
 
 
-            const diamondCount =
+            const coinCount =
                 Math.max(
                     0,
                     Number(
@@ -1016,9 +1583,9 @@ function createConnection() {
                     : repeatCount;
 
 
-            const diamondsForEvent =
+            const coinsForEvent =
                 finalCount > 0
-                    ? diamondCount * finalCount
+                    ? coinCount * finalCount
                     : 0;
 
 
@@ -1030,13 +1597,13 @@ function createConnection() {
                     finalCount;
 
 
-                liveState.diamonds +=
-                    diamondsForEvent;
+                liveState.coins +=
+                    coinsForEvent;
 
 
                 liveState.estimatedUsd =
-                    liveState.diamonds *
-                    DIAMOND_USD_VALUE;
+                    liveState.coins *
+                    COIN_USD_VALUE;
 
             }
 
@@ -1055,7 +1622,10 @@ function createConnection() {
 
                 repeatCount,
 
-                diamondCount,
+                diamondCount:
+                    coinCount,
+
+                coinCount,
 
                 giftType,
 
@@ -1067,7 +1637,10 @@ function createConnection() {
                     finalCount,
 
                 countedDiamonds:
-                    diamondsForEvent
+                    coinsForEvent,
+
+                countedCoins:
+                    coinsForEvent
 
             });
 
@@ -1570,7 +2143,6 @@ async function disconnectTikTok() {
 
     manualDisconnect = true;
 
-
     connecting = false;
 
 
@@ -1599,6 +2171,7 @@ async function disconnectTikTok() {
             await connection.disconnect();
 
         } catch {}
+
 
         connection = null;
 
@@ -1648,7 +2221,8 @@ async function reconnectWithNewUsername() {
 
         type: "usernameSaved",
 
-        username: USERNAME
+        username:
+            USERNAME
 
     });
 
@@ -1689,15 +2263,15 @@ console.log(
 );
 
 console.log(
-    "No Test Mode"
+    "Alert sounds: DISABLED BY DEFAULT"
 );
 
 console.log(
-    "Diamond tracking: ENABLED"
+    "Coin tracking: ENABLED"
 );
 
 console.log(
-    `Estimated diamond USD: $${DIAMOND_USD_VALUE}`
+    `Estimated coin USD: $${COIN_USD_VALUE}`
 );
 
 console.log(
@@ -1705,18 +2279,3 @@ console.log(
 );
 
 console.log("");
-
-
-/*
- * Automatically connect to the saved username
- * when the server starts.
- */
-
-setTimeout(
-    () => {
-
-        connectTikTok();
-
-    },
-    500
-);

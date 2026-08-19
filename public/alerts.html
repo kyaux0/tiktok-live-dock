@@ -291,11 +291,6 @@ body {
     background:
         rgba(255,255,255,0.035);
 
-    /*
-     * These properties are animated for JOIN
-     * events when they expire.
-     */
-
     opacity:
         1;
 
@@ -649,11 +644,6 @@ body {
    JOIN
    ============================================================ */
 
-/*
- * Joins intentionally contain NO secondary text.
- * They are temporary and disappear after 15 seconds.
- */
-
 .event.join {
 
     grid-template-columns:
@@ -949,7 +939,7 @@ let socket = null;
 /*
  * Maximum number of permanent events kept in the feed.
  *
- * JOIN events are removed automatically after 15 seconds,
+ * JOIN events are removed automatically after 5 seconds,
  * while comments/gifts/follows remain until pushed out.
  */
 
@@ -957,7 +947,7 @@ const MAX_EVENTS = 60;
 
 
 /*
- * Joined LIVE alerts disappear after exactly 15 seconds.
+ * Joined LIVE alerts disappear after exactly 5 seconds.
  */
 
 const JOIN_LIFETIME = 5000;
@@ -1134,11 +1124,6 @@ function handleEvent(data) {
             "";
 
 
-        /*
-         * Streakable gifts that haven't ended yet
-         * should remain marked as a streak.
-         */
-
         if (
             data.isStreakable &&
             !data.repeatEnd
@@ -1149,21 +1134,21 @@ function handleEvent(data) {
 
         } else {
 
-            const countedDiamonds =
+            const countedCoins =
                 Number(
+                    data.countedCoins ??
                     data.countedDiamonds ??
                     0
                 );
 
-
             if (
-                countedDiamonds > 0
+                countedCoins > 0
             ) {
 
                 value =
                     `${formatNumber(
-                        countedDiamonds
-                    )} 💎`;
+                        countedCoins
+                    )} 🪙`;
 
             }
 
@@ -1260,14 +1245,6 @@ function handleEvent(data) {
 
             });
 
-
-        /*
-         * Remove this event after 15 seconds.
-         *
-         * First it fades and collapses.
-         * The DOM element is removed only after
-         * the CSS transition has completed.
-         */
 
         setTimeout(
             () => {
@@ -1366,10 +1343,6 @@ function addEvent({
     value = ""
 }) {
 
-    /*
-     * Remove the empty-state message.
-     */
-
     if (
         emptyState &&
         emptyState.parentNode
@@ -1390,10 +1363,6 @@ function addEvent({
         `event ${type} entering`;
 
 
-    /*
-     * ICON
-     */
-
     const iconElement =
         document.createElement(
             "div"
@@ -1408,10 +1377,6 @@ function addEvent({
         icon;
 
 
-    /*
-     * MAIN CONTENT
-     */
-
     const main =
         document.createElement(
             "div"
@@ -1421,10 +1386,6 @@ function addEvent({
     main.className =
         "event-main";
 
-
-    /*
-     * USERNAME
-     */
 
     const userElement =
         document.createElement(
@@ -1444,13 +1405,6 @@ function addEvent({
         userElement
     );
 
-
-    /*
-     * SECONDARY TEXT
-     *
-     * Follows and joins intentionally don't
-     * create this element.
-     */
 
     if (
         text
@@ -1477,10 +1431,6 @@ function addEvent({
     }
 
 
-    /*
-     * RIGHT-SIDE VALUE
-     */
-
     const valueElement =
         document.createElement(
             "div"
@@ -1494,11 +1444,6 @@ function addEvent({
     valueElement.textContent =
         value;
 
-
-    /*
-     * Follows and joins don't need
-     * the right-side value column.
-     */
 
     if (
         type === "follow" ||
@@ -1533,19 +1478,10 @@ function addEvent({
     }
 
 
-    /*
-     * Newest event goes at the top.
-     */
-
     activityFeed.prepend(
         event
     );
 
-
-    /*
-     * Remove the animation class after
-     * the entrance animation completes.
-     */
 
     setTimeout(
         () => {
@@ -1558,14 +1494,6 @@ function addEvent({
         300
     );
 
-
-    /*
-     * Keep the feed bounded.
-     *
-     * JOIN events can disappear naturally,
-     * while permanent events are removed from
-     * the bottom once the feed gets too large.
-     */
 
     trimFeed();
 
@@ -1593,19 +1521,10 @@ function expireJoin(
     }
 
 
-    /*
-     * Start the fade + collapse animation.
-     */
-
     event.classList.add(
         "expiring"
     );
 
-
-    /*
-     * Wait for the CSS transition to finish,
-     * then remove the element completely.
-     */
 
     setTimeout(
         () => {
@@ -1618,11 +1537,6 @@ function expireJoin(
 
             }
 
-
-            /*
-             * If the feed is now empty,
-             * restore the waiting message.
-             */
 
             restoreEmptyStateIfNeeded();
 
@@ -1648,10 +1562,6 @@ function trimFeed() {
     while (
         events.length > MAX_EVENTS
     ) {
-
-        /*
-         * Always remove the oldest event.
-         */
 
         const oldest =
             activityFeed.querySelector(

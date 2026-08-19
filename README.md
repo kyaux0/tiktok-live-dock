@@ -4,7 +4,7 @@
 
 **No TikTok LIVE Studio. No collection of heavyweight browser docks. No unnecessary hardware polling.**
 
-TikTok LIVE Dock connects to a TikTok LIVE through [`tiktok-live-connector`](https://github.com/zerodytrash/TikTok-Live-Connector), processes LIVE events locally with Node.js, and sends them to a minimal browser dashboard through WebSockets.
+TikTok LIVE Dock connects to a TikTok LIVE through [`tiktok-live-connector`](https://github.com/zerodytrash/TikTok-Live-Connector), processes LIVE events locally with Node.js, and sends them to lightweight browser dashboards through WebSockets.
 
 The goal is simple:
 
@@ -14,7 +14,7 @@ The goal is simple:
 
 ## 📸 Preview
 
-<img width="734" height="708" alt="image" src="https://github.com/user-attachments/assets/d804b4b2-735f-4b7b-ad14-6198377d6edd" />
+<img width="1916" height="1019" alt="image" src="https://github.com/user-attachments/assets/8b4ae8de-dcb1-43ae-a32e-1b6c7ed527ba" />
 
 ---
 
@@ -25,47 +25,134 @@ Streaming software can become surprisingly resource-heavy when multiple dashboar
 TikTok LIVE Dock takes a much simpler approach.
 
 ```text
-                 TikTok LIVE
-                      │
-                      ▼
-           TikTok Live Connector
-                      │
-                      ▼
-                Node.js Server
-                      │
-                 WebSocket
-                      │
-                      ▼
-              Local Web Dashboard
-                      │
-                      ▼
-                 OBS Studio
+                         TikTok LIVE
+                              │
+                              ▼
+                   TikTok Live Connector
+                              │
+                              ▼
+                        Node.js Server
+                              │
+                         WebSocket
+                              │
+                 ┌────────────┴────────────┐
+                 ▼                         ▼
+        Statistics Dashboard        Alerts Dashboard
+                 │                         │
+                 └────────────┬────────────┘
+                              ▼
+                         OBS Studio
 ```
 
 Everything runs locally.
 
-There is no need to keep a collection of separate browser docks running just to monitor basic LIVE activity.
+Instead of relying on multiple heavyweight services or browser dashboards, TikTok LIVE Dock provides two lightweight dashboards that can be positioned independently inside OBS Studio.
 
 ---
 
-## ✨ Features
+# ✨ Features
 
-| Feature                         |          Status          |
-| ------------------------------- | :----------------------: |
-| 👀 Concurrent viewers           |             ✅            |
-| ❤️ Total likes                  |             ✅            |
-| 👥 Total channel followers      |             ✅            |
-| ➕ New LIVE followers            |             ✅            |
-| 💬 LIVE chat                    |             ✅            |
-| 🎁 Gifts                        |             ✅            |
-| 👋 Viewer joins                 |             ✅            |
-| ⭐ Fan Club events               |             ✅            |
-| 🔄 Automatic reconnect          |             ✅            |
-| 🧪 Test Mode                    |             ✅            |
-| 🔴 Stream Mode                  |             ✅            |
-| ⚡ Local WebSocket communication |             ✅            |
-| 🖥️ Hardware monitoring         |  ❌ Intentionally removed |
-| 🎁 Extended gift catalog        | ❌ Intentionally disabled |
+| Feature | Status |
+| --- | :---: |
+| 👀 Concurrent viewers | ✅ |
+| ❤️ Total likes | ✅ |
+| 👥 Total channel followers | ✅ |
+| ➕ New LIVE followers | ✅ |
+| 💬 LIVE chat | ✅ |
+| 🎁 Gifts | ✅ |
+| 💎 Diamond tracking | ✅ |
+| 💵 Estimated USD | ✅ |
+| 👋 Viewer joins | ✅ |
+| ⭐ Fan Club events | ✅ |
+| 🔄 Automatic reconnect | ✅ |
+| 🔴 LIVE connection status | ✅ |
+| 🖥️ Separate statistics dashboard | ✅ |
+| 📢 Separate alerts dashboard | ✅ |
+| 💬 Combined real-time alert feed | ✅ |
+| ✨ Automatic joined-user alert fading | ✅ |
+| 👤 Change monitored username from dashboard | ✅ |
+| 💾 Remember last monitored username | ✅ |
+| ⚡ Local WebSocket communication | ✅ |
+| 🧪 Test Mode | ❌ Removed |
+| 🖥️ Hardware monitoring | ❌ Intentionally removed |
+| 🎁 Extended gift catalog | ❌ Intentionally disabled |
+
+---
+
+# 🖥️ Two-Dashboard Design
+
+TikTok LIVE Dock is designed specifically around OBS Studio docks.
+
+Instead of forcing statistics and LIVE activity into one crowded interface, the project separates them into two independent dashboards.
+
+## 📊 Statistics Dashboard
+
+The statistics dashboard focuses on information that should remain visible throughout the entire LIVE:
+
+* 🔴 LIVE connection status
+* 👀 Concurrent viewers
+* ❤️ Total likes
+* 👥 Total channel followers
+* ➕ New followers during the current LIVE
+* 💎 Diamonds
+* 💵 Estimated USD
+* 👤 Monitored TikTok username
+
+The username can be changed directly from the dashboard without modifying `server.js`.
+
+The latest username is automatically remembered, so it does not need to be entered every time the dashboard is opened.
+
+This dashboard is intended to be placed near the top of an OBS Studio workspace.
+
+## 📢 Alerts Dashboard
+
+The alerts dashboard contains a single combined LIVE activity feed.
+
+It displays:
+
+* 💬 Comments
+* 🎁 Gifts
+* ➕ New followers
+* 👋 Viewers joining the LIVE
+* ⭐ Fan Club events
+
+Keeping everything in one feed allows comments to remain highly visible even when chat activity becomes fast.
+
+### 👋 Joined LIVE alerts
+
+Joined LIVE alerts are temporary.
+
+They automatically fade out after a configurable amount of time and smoothly disappear from the feed, allowing newer alerts to move into their place without creating unnecessary clutter.
+
+This keeps the dashboard readable during high viewer activity.
+
+### ➕ Follow alerts
+
+Follow alerts are intentionally compact.
+
+They display only:
+
+* ➕ Follow icon
+* Username
+
+The additional `"followed you"` text is omitted to save vertical space.
+
+### 👋 Join alerts
+
+Join alerts are also intentionally compact.
+
+They display only:
+
+* 👋 Join icon
+* Username
+
+The `"joined the LIVE"` text is omitted because the icon already communicates the event.
+
+### 🎁 Gift and ⭐ Fan Club alerts
+
+Gift and Fan Club alerts display the sender prominently while keeping the event content clearly readable underneath.
+
+For gifts, this includes information such as the gift name and quantity.
 
 ---
 
@@ -73,7 +160,7 @@ There is no need to keep a collection of separate browser docks running just to 
 
 The server establishes a connection to the configured TikTok LIVE and listens for supported Webcast events.
 
-Those events are converted into small JSON messages and broadcast to connected dashboard clients over WebSocket.
+Those events are converted into small JSON messages and broadcast to all connected dashboard clients over WebSocket.
 
 For example:
 
@@ -86,15 +173,17 @@ For example:
 }
 ```
 
-The browser receives the event and immediately updates the interface.
+The browser receives the event and immediately updates the appropriate dashboard.
 
-This avoids constantly polling the server for new information.
+Because both dashboards connect to the same WebSocket server, they remain synchronized automatically.
+
+There is no need to run a separate backend for each dashboard.
 
 ---
 
 # 📊 Supported LIVE Events
 
-### 💬 Chat
+## 💬 Chat
 
 Receives:
 
@@ -102,7 +191,11 @@ Receives:
 * Display name
 * Message
 
-### 🎁 Gifts
+Comments are displayed in the combined alerts feed and are optimized for fast-moving chat.
+
+---
+
+## 🎁 Gifts
 
 Receives basic gift information including:
 
@@ -115,23 +208,41 @@ Receives basic gift information including:
 
 Extended gift information is intentionally disabled.
 
-### 👋 Viewer Joins
+---
+
+## 👋 Viewer Joins
 
 Displays users entering the LIVE when the corresponding event is received.
 
-### ➕ Follows
+Join alerts are temporary and automatically fade from the alerts dashboard after the configured timeout.
+
+---
+
+## ➕ Follows
 
 Tracks new followers received during the current LIVE.
 
-### ⭐ Fan Club
+The dashboard also maintains the total channel follower count when TikTok provides the corresponding information.
+
+---
+
+## ⭐ Fan Club
 
 Displays Fan Club-related events exposed by the connector.
 
-### ❤️ Likes
+These are shown alongside gifts and other LIVE activity in the combined alerts feed.
 
-Uses TikTok's reported total like count.
+---
 
-### 👀 Viewers
+## ❤️ Likes
+
+Uses TikTok's reported total like count when available.
+
+The server also has fallback handling for individual like events when a total is not provided.
+
+---
+
+## 👀 Viewers
 
 Uses the authoritative room viewer count when available.
 
@@ -160,39 +271,41 @@ That avoids requiring the additional signing infrastructure used for extended gi
 
 The project can therefore work with the basic gift information without depending on that service.
 
+Diamond tracking is calculated from the gift information received by the connector.
+
 Any diamond or USD calculation implemented by the project should be treated as an **estimate**, not an official TikTok payout statement.
 
 ---
 
-# 🧪 Test Mode
+# 🔴 LIVE Connection
 
-You don't need to start a LIVE every time you want to test the dashboard.
+The dashboard provides a clear connection status:
 
-Test Mode generates simulated:
+```text
+🔴 LIVE CONNECTED
+```
 
-* Chat messages
-* Gifts
-* Follows
-* Viewer joins
-* Fan Club events
-* Likes
-* Viewer counts
+or
 
-This makes it possible to test the UI and OBS setup safely before going LIVE.
+```text
+⚫ LIVE DISCONNECTED
+```
+
+When a connection unexpectedly drops, the server can automatically attempt to reconnect.
+
+Both dashboards receive the same connection state through the WebSocket server.
 
 ---
 
-# 🔴 Stream Mode
+# 👤 Username Configuration
 
-When you're ready:
+The monitored TikTok username no longer needs to be hard-coded in `server.js`.
 
-1. Open the dashboard.
-2. Select **Stream Mode**.
-3. Click **Confirm Live**.
-4. The Node.js server connects to the configured TikTok username.
-5. LIVE events begin appearing in the dashboard.
+The statistics dashboard provides an input where the username can be changed directly.
 
-If the connection unexpectedly drops, the server can automatically attempt to reconnect.
+The latest username is remembered locally, allowing it to be loaded automatically the next time the dashboard is opened.
+
+This makes it possible to switch between monitored LIVE accounts without modifying the source code.
 
 ---
 
@@ -205,8 +318,9 @@ The server:
 * Does not continuously poll hardware statistics.
 * Does not run unnecessary background monitoring.
 * Uses WebSockets for event delivery.
-* Runs the dashboard locally.
+* Runs the dashboards locally.
 * Keeps the browser UI intentionally minimal.
+* Allows the statistics and alerts interfaces to be separated inside OBS Studio.
 
 On the developer's streaming setup, the Dock has been observed running at approximately **1–2% CPU** while active.
 
@@ -235,21 +349,11 @@ cd tiktok-live-dock
 npm install
 ```
 
-## Configure your account
+## Configure
 
-Open:
+The monitored TikTok username can be configured directly from the dashboard.
 
-```text
-server.js
-```
-
-Find:
-
-```js
-const USERNAME = "your_username";
-```
-
-Replace it with the TikTok username you want to monitor.
+There is no need to edit the source code every time the monitored account changes.
 
 ## Start
 
@@ -263,6 +367,8 @@ Then open:
 http://localhost:3000
 ```
 
+The dashboard will allow you to configure the monitored username and connect to the LIVE.
+
 ---
 
 # 📁 Project Structure
@@ -271,7 +377,8 @@ http://localhost:3000
 tiktok-live-dock/
 │
 ├── public/
-│   └── index.html
+│   ├── index.html
+│   └── alerts.html
 │
 ├── server.js
 ├── package.json
@@ -284,46 +391,66 @@ tiktok-live-dock/
 
 # 🔌 Architecture
 
-The project consists of three simple layers:
+The project consists of three simple layers.
 
-### 1. TikTok connection
+## 1. TikTok connection
 
 `TikTokLiveConnection` receives LIVE events.
 
-### 2. Node.js server
+## 2. Node.js server
 
-Express serves the dashboard while WebSocket broadcasts events to connected clients.
+Express serves the dashboards while WebSocket broadcasts events to all connected clients.
 
-### 3. Browser dashboard
+The server maintains the shared LIVE state, including:
 
-`index.html` receives the events and renders the statistics and Actions Feed.
+* Viewer count
+* Like count
+* Follower count
+* New LIVE followers
+* Diamonds
+* Estimated USD
+* LIVE connection state
+
+## 3. Browser dashboards
+
+The browser dashboards receive events through WebSocket and render the corresponding information.
+
+Both dashboards connect to the same backend.
 
 ```text
-┌──────────────────────┐
-│      TikTok LIVE     │
-└──────────┬───────────┘
-           │
-           ▼
-┌──────────────────────┐
-│ tiktok-live-connector│
-└──────────┬───────────┘
-           │
-           ▼
-┌──────────────────────┐
-│     Node.js Server   │
-│                      │
-│ Express + WebSocket  │
-└──────────┬───────────┘
-           │
-           ▼
-┌──────────────────────┐
-│   Browser Dashboard  │
-└──────────┬───────────┘
-           │
-           ▼
-┌──────────────────────┐
-│      OBS Studio      │
-└──────────────────────┘
+                         ┌──────────────────────┐
+                         │      TikTok LIVE     │
+                         └──────────┬───────────┘
+                                    │
+                                    ▼
+                         ┌──────────────────────┐
+                         │ tiktok-live-connector│
+                         └──────────┬───────────┘
+                                    │
+                                    ▼
+                         ┌──────────────────────┐
+                         │     Node.js Server   │
+                         │                      │
+                         │ Express + WebSocket  │
+                         └──────────┬───────────┘
+                                    │
+                         ┌──────────┴──────────┐
+                         │                     │
+                         ▼                     ▼
+                ┌─────────────────┐   ┌─────────────────┐
+                │ Statistics Dock │   │  Alerts Dock    │
+                │                 │   │                 │
+                │ Viewers         │   │ Comments        │
+                │ Likes           │   │ Gifts           │
+                │ Followers       │   │ Follows         │
+                │ New Followers   │   │ Joins           │
+                │ Diamonds        │   │ Fan Club        │
+                │ Est. USD        │   │                 │
+                └────────┬────────┘   └────────┬────────┘
+                         │                     │
+                         └──────────┬──────────┘
+                                    ▼
+                              OBS Studio
 ```
 
 ---
@@ -335,12 +462,13 @@ Potential future improvements:
 * [ ] Improved gift/diamond handling
 * [ ] More LIVE event types
 * [ ] Customizable dashboard layout
-* [ ] Configurable username without editing source code
 * [ ] Custom themes
 * [ ] Better event filtering
 * [ ] Persistent LIVE statistics
 * [ ] More OBS-focused integration
 * [ ] Installation/setup improvements
+* [ ] Additional dashboard customization
+* [ ] More configurable alert behavior
 
 The roadmap is intentionally flexible and will evolve as the project develops.
 

@@ -159,6 +159,8 @@ const DEFAULT_SOUND_CONFIG = {
 
     globalEnabled: false,
 
+    joinAlertsEnabled: true,
+
     follow: {
         enabled: false,
         volume: 1,
@@ -204,6 +206,9 @@ function loadSoundConfig() {
 
                 globalEnabled:
                     saved.globalEnabled === true,
+
+                joinAlertsEnabled:
+                    saved.joinAlertsEnabled !== false,
 
                 follow: {
 
@@ -439,6 +444,9 @@ app.post(
                 globalEnabled:
                     incoming.globalEnabled === true,
 
+                joinAlertsEnabled:
+                    incoming.joinAlertsEnabled !== false,
+
                 follow: {
 
                     enabled:
@@ -494,6 +502,16 @@ app.post(
 
 
             saveSoundConfig();
+
+            broadcast({
+
+                type:
+                    "settings",
+
+                settings:
+                    soundConfig
+
+            });
 
 
             res.json({

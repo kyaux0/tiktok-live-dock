@@ -935,7 +935,6 @@ body {
 
 let socket = null;
 
-
 /*
  * Maximum number of permanent events kept in the feed.
  *
@@ -943,7 +942,7 @@ let socket = null;
  * while comments/gifts/follows remain until pushed out.
  */
 
-const MAX_EVENTS = 60;
+const MAX_EVENTS = 50;
 
 
 /*
@@ -951,6 +950,8 @@ const MAX_EVENTS = 60;
  */
 
 const JOIN_LIFETIME = 5000;
+
+let joinAlertsEnabled = true;
 
 
 /* ============================================================
@@ -1053,10 +1054,65 @@ function connectWebSocket() {
 
 
 /* ============================================================
+   ALERT SETTINGS
+   ============================================================ */
+
+async function loadAlertSettings() {
+
+    try {
+
+        const response =
+            await fetch(
+                "/api/sound-settings"
+            );
+
+
+        if (
+            !response.ok
+        ) {
+
+            return;
+
+        }
+
+
+        const settings =
+            await response.json();
+
+
+        joinAlertsEnabled =
+            settings.joinAlertsEnabled !== false;
+
+    } catch (error) {
+
+        console.error(
+            "[ALERTS] Could not load alert settings:",
+            error
+        );
+
+    }
+
+}
+
+
+/* ============================================================
    EVENT HANDLER
    ============================================================ */
 
 function handleEvent(data) {
+
+
+    if (
+        data.type === "settings"
+    ) {
+
+        joinAlertsEnabled =
+            data.settings?.joinAlertsEnabled !== false;
+
+
+        return;
+
+    }
 
 
     /* --------------------------------------------------------
@@ -1222,6 +1278,15 @@ function handleEvent(data) {
     if (
         data.type === "join"
     ) {
+
+        if (
+            !joinAlertsEnabled
+        ) {
+
+            return;
+
+        }
+
 
         const event =
             addEvent({
@@ -1553,14 +1618,10 @@ function expireJoin(
 
 function trimFeed() {
 
-    const events =
+    while (
         activityFeed.querySelectorAll(
             ".event"
-        );
-
-
-    while (
-        events.length > MAX_EVENTS
+        ).length > MAX_EVENTS
     ) {
 
         const oldest =
@@ -1647,7 +1708,9 @@ function formatNumber(
    START
    ============================================================ */
 
-connectWebSocket();
+loadAlertSettings().finally(
+    connectWebSocket
+);
 
 </script>
 

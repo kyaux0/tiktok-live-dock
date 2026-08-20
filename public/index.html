@@ -975,7 +975,7 @@ input {
                 id="settingsButton"
                 class="settings-button"
                 type="button"
-                title="Alert Sound Settings"
+                title="Settings"
             >
                 ⚙️
             </button>
@@ -1167,7 +1167,7 @@ input {
         <div class="settings-header">
 
             <div class="settings-title">
-                ⚙️ Alert Sound Settings
+                ⚙️ Settings
             </div>
 
             <button
@@ -1202,6 +1202,36 @@ input {
                 <input
                     id="globalSoundToggle"
                     type="checkbox"
+                >
+
+                <span class="toggle-slider"></span>
+
+            </label>
+
+        </div>
+
+
+        <div class="master-setting">
+
+            <div>
+
+                <div class="master-label">
+                    Join Alerts
+                </div>
+
+                <div class="master-description">
+                    Show or hide alerts when viewers join the LIVE.
+                </div>
+
+            </div>
+
+
+            <label class="toggle">
+
+                <input
+                    id="joinAlertsToggle"
+                    type="checkbox"
+                    checked
                 >
 
                 <span class="toggle-slider"></span>
@@ -1515,6 +1545,11 @@ const globalSoundToggle =
         "globalSoundToggle"
     );
 
+const joinAlertsToggle =
+    document.getElementById(
+        "joinAlertsToggle"
+    );
+
 const soundUpload =
     document.getElementById(
         "soundUpload"
@@ -1626,6 +1661,8 @@ let soundSettings = {
 
     globalEnabled: false,
 
+    joinAlertsEnabled: true,
+
     follow: {
         enabled: false,
         volume: 1,
@@ -1697,6 +1734,9 @@ function applySoundSettingsToUI() {
 
     globalSoundToggle.checked =
         soundSettings.globalEnabled === true;
+
+    joinAlertsToggle.checked =
+        soundSettings.joinAlertsEnabled !== false;
 
 
     for (
@@ -1774,6 +1814,9 @@ async function saveSoundSettings() {
 
     soundSettings.globalEnabled =
         globalSoundToggle.checked;
+
+    soundSettings.joinAlertsEnabled =
+        joinAlertsToggle.checked;
 
 
     for (
@@ -2116,6 +2159,11 @@ settingsOverlay.addEventListener(
 
 
 globalSoundToggle.addEventListener(
+    "change",
+    saveSoundSettings
+);
+
+joinAlertsToggle.addEventListener(
     "change",
     saveSoundSettings
 );

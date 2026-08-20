@@ -278,7 +278,9 @@ These values should be treated as **estimates**, not official TikTok payout figu
 
 Displays users entering the LIVE when the corresponding event is received.
 
-Join alerts automatically fade from the Alerts Dock after the configured timeout.
+Join alerts automatically fade from the Alerts Dock after the configured 5-seconds timeout.
+
+Join alerts can be disabled in the Settings.
 
 ---
 
@@ -385,12 +387,6 @@ git clone https://github.com/kyaux0/tiktok-live-dock.git
 cd tiktok-live-dock
 ```
 
-## Install dependencies
-
-```bash
-npm install
-```
-
 ## Start
 
 Run:
@@ -399,12 +395,13 @@ Run:
 start.bat
 ```
 
-`start.bat` handles starting the TikTok LIVE Dock automatically.
+`start.bat` handles installation and starts the TikTok LIVE Dock automatically.
 
 Once the Dock is running, open:
 
 ```text
-http://localhost:3000
+http://localhost:3000/
+http://localhost:3000/alerts.html
 ```
 
 The Dock will **not** attempt to connect to a TikTok LIVE automatically.
@@ -427,6 +424,7 @@ tiktok-live-dock/
 ├── package.json
 ├── package-lock.json
 ├── dock-config.json
+├── sound-config.json
 ├── .gitignore
 └── README.md
 ```
@@ -488,7 +486,7 @@ The browser dashboards receive events through WebSocket and render the correspon
                 │ New Followers   │   │ Joins           │
                 │ Diamonds        │   │ Fan Club        │
                 │ Est. USD        │   │                 │
-                │ Sound Controls  │   │                 │
+                │ Settings        │   |                 │
                 └─────────────────┘   └─────────────────┘
 ```
 

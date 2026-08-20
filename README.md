@@ -29,7 +29,7 @@ The goal is simple:
 | ➕ New LIVE followers | ✅ |
 | 💬 LIVE comments | ✅ |
 | 🎁 Gift tracking | ✅ |
-| 💎 Diamond tracking | ✅ |
+| 🪙 Coins tracking | ✅ |
 | 💵 Estimated USD | ✅ |
 | 👋 Viewer joins | ✅ |
 | ⭐ Fan Club events | ✅ |
@@ -86,7 +86,7 @@ It displays:
 * ❤️ Total likes
 * 👥 Total channel followers
 * ➕ New followers during the current LIVE
-* 💎 Diamonds
+* 🪙 Coins
 * 💵 Estimated USD
 * 👤 Monitored TikTok username
 * 🔊 Sound alert controls
@@ -264,7 +264,7 @@ This keeps the project lightweight and avoids requiring the additional signing i
 
 ---
 
-## 💎 Diamonds & Estimated USD
+## 🪙 Coins & Estimated USD
 
 Diamond values are calculated from the gift information received by the connector.
 

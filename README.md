@@ -14,7 +14,8 @@ The goal is simple:
 
 ## 📸 Preview
 
-<img width="1916" height="1019" alt="image" src="https://github.com/user-attachments/assets/8b4ae8de-dcb1-43ae-a32e-1b6c7ed527ba" />
+<img width="1919" height="1020" alt="image" src="https://github.com/user-attachments/assets/1c595299-3428-49bc-a08b-064fc0cd0414" />
+
 
 ---
 
